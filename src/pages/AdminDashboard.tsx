@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import Navbar from '@/components/ui/navbar/navbar';
@@ -46,9 +47,10 @@ const AdminDashboard = () => {
       try {
         setIsLoading(true);
         
+        // Fixed query: Don't try to join on user_id, just fetch invoices
         const { data: invoiceData, error } = await supabase
           .from('invoices')
-          .select('*, user_id (email)')
+          .select('*')
           .order('created_at', { ascending: false });
         
         if (error) {
