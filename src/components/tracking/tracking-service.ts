@@ -44,7 +44,7 @@ export const trackShipment = async (
       
       return { trackingResult, trackingSteps: steps };
     } else {
-      // If the shipment isn't found and it's the demo tracking number, create it
+      // Only create demo invoice for the specific demo tracking number
       if (trackingNumber.trim() === 'MT-202503657') {
         console.log("Creating demo invoice and retrying tracking");
         await createDemoInvoice();
