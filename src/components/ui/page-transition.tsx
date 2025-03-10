@@ -30,11 +30,6 @@ const pageVariants = {
   }
 };
 
-const childVariants = {
-  initial: { opacity: 0, y: 20 },
-  enter: { opacity: 1, y: 0 }
-};
-
 const PageTransition: React.FC<PageTransitionProps> = ({ children }) => {
   return (
     <motion.div
