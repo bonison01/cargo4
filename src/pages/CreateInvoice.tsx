@@ -137,7 +137,7 @@ const CreateInvoice = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="amount">Amount (₹)</Label>
+                  <Label htmlFor="amount">Value of the Product (₹)</Label>
                   <Input
                     id="amount"
                     name="amount"

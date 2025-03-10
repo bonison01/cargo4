@@ -14,6 +14,9 @@ import TrackShipment from "./pages/TrackShipment";
 import CreateInvoice from "./pages/CreateInvoice";
 import ProtectedRoute from "./components/ui/protected-route";
 import { HelmetProvider } from "react-helmet-async";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminEditInvoice from "./pages/AdminEditInvoice";
+import InvoiceDetails from "./pages/InvoiceDetails";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +41,22 @@ const App = () => (
               <Route path="/invoices/new" element={
                 <ProtectedRoute>
                   <CreateInvoice />
+                </ProtectedRoute>
+              } />
+              <Route path="/invoices/:id" element={<InvoiceDetails />} />
+              <Route path="/admin/dashboard" element={
+                <ProtectedRoute>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/invoices/new" element={
+                <ProtectedRoute>
+                  <AdminEditInvoice />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/invoices/edit/:id" element={
+                <ProtectedRoute>
+                  <AdminEditInvoice />
                 </ProtectedRoute>
               } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

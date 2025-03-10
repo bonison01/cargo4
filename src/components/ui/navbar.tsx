@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Menu, X, Package, UserCircle, LogOut } from 'lucide-react';
+import { Menu, X, Package, UserCircle, LogOut, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +15,7 @@ const Navbar = () => {
   const { toast } = useToast();
   
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [userName, setUserName] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -26,9 +28,14 @@ const Navbar = () => {
           setIsAuthenticated(true);
           const userData = session.user.user_metadata || {};
           setUserName(userData.name || userData.email || session.user.email || '');
+          
+          // Check if user is admin
+          const userEmail = session.user.email || '';
+          setIsAdmin(userEmail.endsWith('@mateng.com') || userEmail.includes('admin'));
         } else {
           setIsAuthenticated(false);
           setUserName('');
+          setIsAdmin(false);
         }
       } catch (error) {
         console.error('Error checking auth status:', error);
@@ -44,8 +51,13 @@ const Navbar = () => {
       if (session) {
         const userData = session.user.user_metadata || {};
         setUserName(userData.name || userData.email || session.user.email || '');
+        
+        // Check if user is admin
+        const userEmail = session.user.email || '';
+        setIsAdmin(userEmail.endsWith('@mateng.com') || userEmail.includes('admin'));
       } else {
         setUserName('');
+        setIsAdmin(false);
       }
     });
     
@@ -98,6 +110,10 @@ const Navbar = () => {
     { name: 'New Invoice', path: '/invoices/new' },
     { name: 'My Shipments', path: '/shipments' },
   ];
+  
+  const adminLinks = [
+    { name: 'Admin Dashboard', path: '/admin/dashboard', icon: <ShieldCheck className="h-4 w-4 mr-2" /> },
+  ];
 
   const navbarClasses = `fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
     isScrolled 
@@ -138,6 +154,29 @@ const Navbar = () => {
                 </Link>
               </li>
             ))}
+            
+            {isAdmin && (
+              <li>
+                <Link
+                  to="/admin/dashboard"
+                  className={`text-sm font-medium relative transition-colors duration-200 hover:text-mateng-600 flex items-center ${
+                    location.pathname.includes('/admin')
+                      ? 'text-mateng-600'
+                      : 'text-foreground/80'
+                  }`}
+                >
+                  <ShieldCheck className="h-4 w-4 mr-1" />
+                  Admin
+                  {location.pathname.includes('/admin') && (
+                    <motion.div
+                      layoutId="navIndicator"
+                      className="absolute -bottom-1 left-0 right-0 h-0.5 bg-mateng-500"
+                      transition={{ type: 'spring', duration: 0.5 }}
+                    />
+                  )}
+                </Link>
+              </li>
+            )}
           </ul>
           
           {isAuthenticated ? (
@@ -207,6 +246,22 @@ const Navbar = () => {
                           : 'text-foreground/80 hover:bg-mateng-50'
                       }`}
                     >
+                      {link.name}
+                    </Link>
+                  </li>
+                ))}
+                
+                {isAdmin && adminLinks.map((link) => (
+                  <li key={link.name}>
+                    <Link
+                      to={link.path}
+                      className={`flex items-center py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                        location.pathname.includes('/admin')
+                          ? 'bg-mateng-50 text-mateng-600'
+                          : 'text-foreground/80 hover:bg-mateng-50'
+                      }`}
+                    >
+                      {link.icon}
                       {link.name}
                     </Link>
                   </li>

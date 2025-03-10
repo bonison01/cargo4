@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import Navbar from '@/components/ui/navbar';
 import PageTransition from '@/components/ui/page-transition';
@@ -9,70 +9,33 @@ import { Search, PackageCheck, Package, Truck, MapPin } from 'lucide-react';
 import TrackTimeline, { TrackingStep } from '@/components/ui/track-timeline';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
-
-const demoTrackingData: {
-  consignmentNo: string;
-  status: string;
-  origin: string;
-  destination: string;
-  estimatedDelivery: string;
-  currentLocation: string;
-  steps: TrackingStep[];
-} = {
-  consignmentNo: 'MT-2024050001',
-  status: 'In Transit',
-  origin: 'Imphal, Manipur',
-  destination: 'New Delhi, Delhi',
-  estimatedDelivery: 'May 18, 2024',
-  currentLocation: 'Guwahati, Assam',
-  steps: [
-    {
-      status: 'Order Placed',
-      location: 'Imphal, Manipur',
-      timestamp: 'May 15, 2024 • 09:30 AM',
-      isCompleted: true,
-      isCurrent: false
-    },
-    {
-      status: 'Picked Up',
-      location: 'Imphal, Manipur',
-      timestamp: 'May 15, 2024 • 02:15 PM',
-      isCompleted: true,
-      isCurrent: false
-    },
-    {
-      status: 'In Transit',
-      location: 'Guwahati, Assam',
-      timestamp: 'May 16, 2024 • 11:45 AM',
-      isCompleted: false,
-      isCurrent: true
-    },
-    {
-      status: 'Out for Delivery',
-      location: 'New Delhi, Delhi',
-      timestamp: 'Estimated: May 18, 2024',
-      isCompleted: false,
-      isCurrent: false
-    },
-    {
-      status: 'Delivered',
-      location: 'New Delhi, Delhi',
-      timestamp: 'Estimated: May 18, 2024',
-      isCompleted: false,
-      isCurrent: false
-    }
-  ]
-};
+import { supabase } from "@/integrations/supabase/client";
+import { useSearchParams, useNavigate } from 'react-router-dom';
 
 const TrackShipment = () => {
   const { toast } = useToast();
-  const [consignmentNo, setConsignmentNo] = useState('');
-  const [trackingResult, setTrackingResult] = useState<typeof demoTrackingData | null>(null);
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const consignmentParam = searchParams.get('consignment');
+  
+  const [consignmentNo, setConsignmentNo] = useState(consignmentParam || '');
+  const [trackingResult, setTrackingResult] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [trackingSteps, setTrackingSteps] = useState<TrackingStep[]>([]);
 
-  const handleTrackingSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!consignmentNo) {
+  // Auto-track if consignment number is provided in URL
+  useEffect(() => {
+    if (consignmentParam) {
+      handleTrackingSubmit(null, consignmentParam);
+    }
+  }, [consignmentParam]);
+
+  const handleTrackingSubmit = async (e: React.FormEvent | null, initialConsignment?: string) => {
+    if (e) e.preventDefault();
+    
+    const trackingNumber = initialConsignment || consignmentNo;
+    
+    if (!trackingNumber) {
       toast({
         title: "Tracking number required",
         description: "Please enter a consignment number to track",
@@ -83,10 +46,65 @@ const TrackShipment = () => {
     
     setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      if (consignmentNo.toLowerCase() === 'mt-2024050001' || consignmentNo.toLowerCase() === '2024050001') {
-        setTrackingResult(demoTrackingData);
+    try {
+      // Query Supabase for the actual tracking info
+      const { data, error } = await supabase
+        .from('invoices')
+        .select('*')
+        .eq('consignment_no', trackingNumber)
+        .single();
+      
+      if (error) {
+        throw error;
+      }
+      
+      if (data) {
+        setTrackingResult({
+          consignmentNo: data.consignment_no,
+          status: data.status,
+          origin: data.from_location,
+          destination: data.to_location,
+          estimatedDelivery: getEstimatedDelivery(data.created_at),
+          currentLocation: getCurrentLocation(data.status, data.from_location, data.to_location),
+        });
+        
+        // Generate tracking steps
+        const steps: TrackingStep[] = [];
+        const statuses = ['pending', 'processing', 'in-transit', 'delivered'];
+        const statusLabels = ['Order Placed', 'Processing', 'In Transit', 'Delivered'];
+        const createdDate = new Date(data.created_at);
+        
+        // Find the current status index
+        const currentStatusIndex = statuses.indexOf(data.status);
+        
+        for (let i = 0; i < statuses.length; i++) {
+          const isCompleted = i <= currentStatusIndex;
+          const isCurrent = i === currentStatusIndex;
+          
+          // Calculate a date that's i days after created date
+          const stepDate = new Date(createdDate);
+          stepDate.setDate(createdDate.getDate() + i);
+          
+          steps.push({
+            status: statusLabels[i],
+            location: i === 0 ? data.from_location : 
+                     i === statuses.length - 1 ? data.to_location : 
+                     i === 1 ? 'Sorting Center' : 'Transit Hub',
+            timestamp: isCompleted ? 
+                      stepDate.toLocaleDateString('en-US', {month: 'long', day: 'numeric', year: 'numeric'}) +
+                      ' • ' + stepDate.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'}) :
+                      'Estimated: ' + new Date(createdDate.setDate(createdDate.getDate() + 3)).toLocaleDateString('en-US', {month: 'long', day: 'numeric', year: 'numeric'}),
+            isCompleted,
+            isCurrent
+          });
+        }
+        
+        setTrackingSteps(steps);
+        
+        // Update URL with consignment number for shareable link
+        if (!initialConsignment) {
+          setSearchParams({ consignment: trackingNumber });
+        }
       } else {
         toast({
           title: "Shipment not found",
@@ -94,14 +112,72 @@ const TrackShipment = () => {
           variant: "destructive",
         });
         setTrackingResult(null);
+        setTrackingSteps([]);
       }
+    } catch (error: any) {
+      console.error('Error tracking shipment:', error);
+      toast({
+        title: "Error tracking shipment",
+        description: error.message || "An error occurred while tracking your shipment",
+        variant: "destructive",
+      });
+      setTrackingResult(null);
+      setTrackingSteps([]);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
-  // For demo purposes, you can pre-fill with a valid tracking number
-  const fillDemoTracking = () => {
-    setConsignmentNo('MT-2024050001');
+  // Helper functions
+  const getEstimatedDelivery = (createdAt: string) => {
+    const date = new Date(createdAt);
+    date.setDate(date.getDate() + 3); // Estimate 3 days for delivery
+    return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  };
+
+  const getCurrentLocation = (status: string, origin: string, destination: string) => {
+    switch(status) {
+      case 'pending':
+        return origin;
+      case 'processing':
+        return 'Sorting Center, ' + origin.split(',')[1]?.trim() || origin;
+      case 'in-transit':
+        return 'Transit Hub, Guwahati';
+      case 'delivered':
+        return destination;
+      default:
+        return origin;
+    }
+  };
+
+  // For demo purposes, find a valid tracking number
+  const fillDemoTracking = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('invoices')
+        .select('consignment_no')
+        .limit(1)
+        .single();
+      
+      if (error) throw error;
+      
+      if (data) {
+        setConsignmentNo(data.consignment_no);
+      } else {
+        // If no invoices exist, use a demo one
+        setConsignmentNo('MT-2024050001');
+      }
+    } catch (error) {
+      console.error('Error fetching demo tracking:', error);
+      // Fallback to static demo
+      setConsignmentNo('MT-2024050001');
+    }
+  };
+
+  const viewInvoiceDetails = () => {
+    if (trackingResult) {
+      navigate(`/invoices/${trackingResult.id}`);
+    }
   };
 
   return (
@@ -185,7 +261,7 @@ const TrackShipment = () => {
                     <div className="flex justify-between items-start mb-4">
                       <h2 className="text-xl font-semibold">Shipment Details</h2>
                       <span className="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium bg-mateng-500/10 text-mateng-700">
-                        {trackingResult.status}
+                        {trackingResult.status.charAt(0).toUpperCase() + trackingResult.status.slice(1)}
                       </span>
                     </div>
                     <p className="text-lg mb-1">{trackingResult.consignmentNo}</p>
@@ -228,9 +304,22 @@ const TrackShipment = () => {
                         <p className="text-sm text-muted-foreground mb-1">Shipment Progress</p>
                         <div className="mt-2">
                           <div className="w-full h-2 bg-muted rounded-full">
-                            <div className="h-full w-3/5 bg-mateng-600 rounded-full"></div>
+                            <div 
+                              className="h-full bg-mateng-600 rounded-full" 
+                              style={{ 
+                                width: trackingResult.status === 'pending' ? '25%' : 
+                                       trackingResult.status === 'processing' ? '50%' : 
+                                       trackingResult.status === 'in-transit' ? '75%' : 
+                                       trackingResult.status === 'delivered' ? '100%' : '0%'
+                              }}
+                            ></div>
                           </div>
-                          <p className="text-right text-sm text-mateng-600 mt-1">60%</p>
+                          <p className="text-right text-sm text-mateng-600 mt-1">
+                            {trackingResult.status === 'pending' ? '25%' : 
+                             trackingResult.status === 'processing' ? '50%' : 
+                             trackingResult.status === 'in-transit' ? '75%' : 
+                             trackingResult.status === 'delivered' ? '100%' : '0%'}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -239,7 +328,7 @@ const TrackShipment = () => {
                 
                 <div className="glass-card rounded-xl p-6">
                   <h3 className="text-xl font-semibold mb-4">Tracking History</h3>
-                  <TrackTimeline steps={trackingResult.steps} />
+                  <TrackTimeline steps={trackingSteps} />
                 </div>
               </motion.div>
             )}
