@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import Navbar from '@/components/ui/navbar/navbar';
@@ -196,7 +197,12 @@ const Index = () => {
             </div>
             
             <div className="mt-12 pt-8 border-t border-border text-center text-sm text-muted-foreground">
-              <p>© 2024 Mateng Shipping. All rights reserved.</p>
+              <p className="mb-2">© 2024 Mateng Shipping. All rights reserved.</p>
+              <p className="flex justify-center space-x-4">
+                <Link to="/login" className="hover:text-mateng-600">User Login</Link>
+                <Link to="/register" className="hover:text-mateng-600">User Register</Link>
+                <Link to="/admin/dashboard" className="hover:text-mateng-600">Admin Portal</Link>
+              </p>
             </div>
           </div>
         </footer>
