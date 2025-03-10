@@ -47,11 +47,11 @@ const TrackShipment = () => {
     setIsLoading(true);
     
     try {
-      // Query Supabase for the actual tracking info - using maybeSingle() instead of single()
+      // Query Supabase for the tracking info without requiring auth
       const { data, error } = await supabase
         .from('invoices')
         .select('*')
-        .eq('consignment_no', trackingNumber)
+        .eq('consignment_no', trackingNumber.trim())
         .maybeSingle();
       
       if (error) {
