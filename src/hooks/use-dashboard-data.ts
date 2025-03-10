@@ -5,6 +5,21 @@ import { useToast } from '@/hooks/use-toast';
 import { Invoice } from '@/types/invoice';
 import { InvoiceProps } from '@/components/ui/invoice-card';
 
+// Define a type for the raw data from Supabase
+interface RawInvoice {
+  id: string;
+  consignment_no: string;
+  from_location: string;
+  to_location: string;
+  amount: number;
+  status: string;
+  created_at: string;
+  updated_at?: string;
+  user_id?: string;
+  weight?: number | null;
+  items?: string | null;
+}
+
 export const useDashboardData = () => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
@@ -33,7 +48,10 @@ export const useDashboardData = () => {
         }
         
         if (invoiceData) {
-          const transformedInvoices: InvoiceProps[] = invoiceData.map((invoice: Invoice) => ({
+          // Type assertion to indicate that invoiceData is an array of RawInvoice objects
+          const rawInvoices = invoiceData as RawInvoice[];
+          
+          const transformedInvoices: InvoiceProps[] = rawInvoices.map((invoice) => ({
             id: invoice.id,
             consignmentNo: invoice.consignment_no,
             from: invoice.from_location,
@@ -43,20 +61,22 @@ export const useDashboardData = () => {
               day: 'numeric',
               year: 'numeric'
             }),
-            status: invoice.status,
+            // Cast to the union type since we know the values match our expected types
+            status: invoice.status as Invoice['status'],
             amount: `₹${Number(invoice.amount).toLocaleString('en-IN')}`
           }));
           
           setInvoices(transformedInvoices);
           setFilteredInvoices(transformedInvoices);
           
-          const active = invoiceData.filter((i: Invoice) => 
+          // Calculate statistics
+          const active = rawInvoices.filter((i) => 
             i.status === 'processing' || i.status === 'in-transit'
           ).length;
           
-          const delivered = invoiceData.filter((i: Invoice) => i.status === 'delivered').length;
-          const pending = invoiceData.filter((i: Invoice) => i.status === 'pending').length;
-          const totalValue = invoiceData.reduce((sum, i: Invoice) => sum + Number(i.amount), 0);
+          const delivered = rawInvoices.filter((i) => i.status === 'delivered').length;
+          const pending = rawInvoices.filter((i) => i.status === 'pending').length;
+          const totalValue = rawInvoices.reduce((sum, i) => sum + Number(i.amount), 0);
           
           setStats({
             active,
