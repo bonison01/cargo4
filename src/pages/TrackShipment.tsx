@@ -9,6 +9,7 @@ import TrackingForm from '@/components/tracking/tracking-form';
 import TrackingResultDisplay from '@/components/tracking/tracking-result';
 import { TrackingResult } from '@/components/tracking/tracking-utils';
 import { TrackingStep } from '@/components/ui/track-timeline';
+import { supabase } from '@/integrations/supabase/client';
 
 const TrackShipment = () => {
   const navigate = useNavigate();
@@ -19,6 +20,27 @@ const TrackShipment = () => {
   const [trackingResult, setTrackingResult] = useState<TrackingResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [trackingSteps, setTrackingSteps] = useState<TrackingStep[]>([]);
+
+  // Check if we need to create a demo record if none exist
+  useEffect(() => {
+    const checkForDemoData = async () => {
+      const { count, error } = await supabase
+        .from('invoices')
+        .select('*', { count: 'exact', head: true });
+      
+      if (error) {
+        console.error("Error checking for invoice records:", error);
+        return;
+      }
+      
+      // If no params and no data, automatically set the consignment number
+      if (count === 0 && !consignmentParam) {
+        setConsignmentNo('MT-202503657');
+      }
+    };
+    
+    checkForDemoData();
+  }, [consignmentParam]);
 
   // Auto-track if consignment number is provided in URL
   useEffect(() => {

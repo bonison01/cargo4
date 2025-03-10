@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
@@ -24,6 +24,54 @@ const TrackingForm: React.FC<TrackingFormProps> = ({
 }) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Check if we need to create a demo record on first load
+  useEffect(() => {
+    const checkForDemoData = async () => {
+      // Check if any records exist in the database
+      const { count, error } = await supabase
+        .from('invoices')
+        .select('*', { count: 'exact', head: true });
+      
+      if (error) {
+        console.error("Error checking for invoice records:", error);
+        return;
+      }
+      
+      // If no records exist, create a demo record
+      if (count === 0) {
+        await createDemoInvoice();
+      }
+    };
+    
+    checkForDemoData();
+  }, []);
+
+  // Create a demo invoice for tracking
+  const createDemoInvoice = async () => {
+    console.log("Creating demo invoice as no invoices exist");
+    
+    const demoInvoice = {
+      consignment_no: 'MT-202503657',
+      from_location: 'Imphal, Manipur',
+      to_location: 'Delhi, India',
+      status: 'in-transit',
+      amount: 1250,
+      weight: 5.2,
+      user_id: '00000000-0000-0000-0000-000000000000', // Placeholder ID
+      items: 'Demo Shipment Package'
+    };
+    
+    const { error } = await supabase
+      .from('invoices')
+      .insert(demoInvoice);
+    
+    if (error) {
+      console.error("Error creating demo invoice:", error);
+    } else {
+      console.log("Demo invoice created successfully");
+    }
+  };
 
   const handleTrackingSubmit = async (e: React.FormEvent | null) => {
     if (e) e.preventDefault();
@@ -45,7 +93,7 @@ const TrackingForm: React.FC<TrackingFormProps> = ({
     try {
       console.log("Tracking number:", trackingNumber.trim());
       
-      // Query Supabase for the tracking info - IMPORTANT: No auth required for tracking
+      // Query Supabase for the tracking info - No auth required for tracking
       const { data, error } = await supabase
         .from('invoices')
         .select('*')
@@ -77,6 +125,15 @@ const TrackingForm: React.FC<TrackingFormProps> = ({
           onTrackingResult(trackingResult, steps);
         });
       } else {
+        // If the shipment isn't found, try creating a demo invoice with the entered tracking number
+        if (trackingNumber === 'MT-202503657') {
+          await createDemoInvoice();
+          
+          // Try tracking again after creating the demo
+          handleTrackingSubmit(null);
+          return;
+        }
+        
         toast({
           title: "Shipment not found",
           description: "No shipment found with the given consignment number",
@@ -117,8 +174,9 @@ const TrackingForm: React.FC<TrackingFormProps> = ({
         console.log("Found demo tracking:", data[0].consignment_no);
         setConsignmentNo(data[0].consignment_no);
       } else {
-        // If no invoices exist, use a demo one
-        console.log("No invoices found, using static demo");
+        // If no invoices exist, create one and use it
+        console.log("No invoices found, creating demo invoice");
+        await createDemoInvoice();
         setConsignmentNo('MT-202503657');
       }
     } catch (error) {
