@@ -43,7 +43,9 @@ const TrackingForm: React.FC<TrackingFormProps> = ({
     setIsLoading(true);
     
     try {
-      // Query Supabase for the tracking info without requiring auth
+      console.log("Tracking number:", trackingNumber.trim());
+      
+      // Query Supabase for the tracking info - IMPORTANT: No auth required for tracking
       const { data, error } = await supabase
         .from('invoices')
         .select('*')
@@ -51,8 +53,11 @@ const TrackingForm: React.FC<TrackingFormProps> = ({
         .maybeSingle();
       
       if (error) {
+        console.error("Supabase error:", error);
         throw error;
       }
+      
+      console.log("Tracking result:", data);
       
       if (data) {
         import('./tracking-utils').then(({ getEstimatedDelivery, getCurrentLocation, generateTrackingSteps }) => {
@@ -96,24 +101,30 @@ const TrackingForm: React.FC<TrackingFormProps> = ({
   // For demo purposes, find a valid tracking number
   const fillDemoTracking = async () => {
     try {
+      console.log("Fetching demo tracking number");
+      // Using a more direct approach to ensure we can fetch without auth
       const { data, error } = await supabase
         .from('invoices')
         .select('consignment_no')
-        .limit(1)
-        .single();
+        .limit(1);
       
-      if (error) throw error;
+      if (error) {
+        console.error("Demo tracking error:", error);
+        throw error;
+      }
       
-      if (data) {
-        setConsignmentNo(data.consignment_no);
+      if (data && data.length > 0) {
+        console.log("Found demo tracking:", data[0].consignment_no);
+        setConsignmentNo(data[0].consignment_no);
       } else {
         // If no invoices exist, use a demo one
-        setConsignmentNo('MT-2024050001');
+        console.log("No invoices found, using static demo");
+        setConsignmentNo('MT-202503657');
       }
     } catch (error) {
       console.error('Error fetching demo tracking:', error);
       // Fallback to static demo
-      setConsignmentNo('MT-2024050001');
+      setConsignmentNo('MT-202503657');
     }
   };
 
@@ -123,12 +134,12 @@ const TrackingForm: React.FC<TrackingFormProps> = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.1 }}
     >
-      <form onSubmit={handleTrackingSubmit} className="glass-card rounded-xl p-6 mb-8">
+      <form onSubmit={handleTrackingSubmit} className="glass-card rounded-xl p-6 mb-8" id="tracking-form">
         <div className="flex flex-col md:flex-row gap-3">
           <div className="relative flex-grow">
             <Input
               type="text"
-              placeholder="Enter consignment number (e.g., MT-2024050001)"
+              placeholder="Enter consignment number (e.g., MT-202503657)"
               value={consignmentNo}
               onChange={(e) => setConsignmentNo(e.target.value)}
               className="pl-10 py-6 text-base"
