@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import Navbar from '@/components/ui/navbar/navbar';
@@ -8,7 +9,7 @@ import TrackingForm from '@/components/tracking/tracking-form';
 import TrackingResultDisplay from '@/components/tracking/tracking-result';
 import { TrackingResult } from '@/components/tracking/tracking-utils';
 import { TrackingStep } from '@/components/ui/track-timeline';
-import { supabase } from '@/integrations/supabase/client';
+import { fetchDemoTrackingNumber } from '@/components/tracking/demo-invoice-utils';
 
 const TrackShipment = () => {
   const navigate = useNavigate();
@@ -26,14 +27,8 @@ const TrackShipment = () => {
       try {
         // Check if we need a demo consignment
         if (!consignmentParam) {
-          const { data } = await supabase.functions.invoke('public-tracking', {
-            body: { mode: 'check-demo' }
-          });
-          
-          if (!data.demoExists) {
-            console.log("No demo data found, setting demo consignment number");
-            setConsignmentNo('MT-202503657');
-          }
+          // Just set the demo tracking number for easy testing
+          setConsignmentNo('MT-202503657');
         }
       } catch (error) {
         console.error("Error initializing data:", error);

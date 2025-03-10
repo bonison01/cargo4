@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
@@ -7,7 +7,6 @@ import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import TrackingLoadingIndicator from './tracking-loading-indicator';
 import DemoTrackingButton from './demo-tracking-button';
-import { checkForDemoData } from './demo-invoice-utils';
 import { trackShipment } from './tracking-service';
 
 interface TrackingFormProps {
@@ -27,11 +26,6 @@ const TrackingForm: React.FC<TrackingFormProps> = ({
 }) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  
-  // Check if we need to create a demo record on first load
-  useEffect(() => {
-    checkForDemoData();
-  }, []);
 
   const handleTrackingSubmit = async (e: React.FormEvent | null) => {
     if (e) e.preventDefault();

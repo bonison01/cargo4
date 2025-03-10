@@ -1,6 +1,5 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { createDemoInvoice } from './demo-invoice-utils';
 import { TrackingResult } from './tracking-utils';
 
 /**
@@ -54,9 +53,14 @@ export const trackShipment = async (
         // Try tracking again after creating the demo
         return new Promise((resolve) => {
           setTimeout(async () => {
-            const result = await trackShipment(trackingNumber);
-            resolve(result);
-          }, 1000); // Increased timeout to give the function time to complete
+            try {
+              const result = await trackShipment(trackingNumber);
+              resolve(result);
+            } catch (error) {
+              console.error("Error in retry tracking:", error);
+              resolve({ trackingResult: null, trackingSteps: [] });
+            }
+          }, 2000); // Increased timeout to give the function time to complete
         });
       }
       
@@ -64,6 +68,6 @@ export const trackShipment = async (
     }
   } catch (error) {
     console.error('Error tracking shipment:', error);
-    throw error;
+    return { trackingResult: null, trackingSteps: [] }; // Return empty result instead of throwing
   }
 };
