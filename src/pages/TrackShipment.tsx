@@ -24,18 +24,23 @@ const TrackShipment = () => {
   // Check if we need to create a demo record if none exist
   useEffect(() => {
     const checkForDemoData = async () => {
-      const { count, error } = await supabase
-        .from('invoices')
-        .select('*', { count: 'exact', head: true });
-      
-      if (error) {
-        console.error("Error checking for invoice records:", error);
-        return;
-      }
-      
-      // If no params and no data, automatically set the consignment number
-      if (count === 0 && !consignmentParam) {
-        setConsignmentNo('MT-202503657');
+      try {
+        const { count, error } = await supabase
+          .from('invoices')
+          .select('*', { count: 'exact', head: true });
+        
+        if (error) {
+          console.error("Error checking for invoice records:", error);
+          return;
+        }
+        
+        // If no params and no data, automatically set the consignment number
+        if (count === 0 && !consignmentParam) {
+          console.log("No invoices found and no consignment parameter, setting demo consignment number");
+          setConsignmentNo('MT-202503657');
+        }
+      } catch (error) {
+        console.error("Error in checkForDemoData:", error);
       }
     };
     
@@ -45,6 +50,7 @@ const TrackShipment = () => {
   // Auto-track if consignment number is provided in URL
   useEffect(() => {
     if (consignmentParam) {
+      console.log("Auto-tracking with consignment parameter:", consignmentParam);
       const trackingFormRef = document.getElementById('tracking-form') as HTMLFormElement;
       if (trackingFormRef) {
         trackingFormRef.dispatchEvent(new Event('submit', { cancelable: true }));

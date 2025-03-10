@@ -28,19 +28,23 @@ const TrackingForm: React.FC<TrackingFormProps> = ({
   // Check if we need to create a demo record on first load
   useEffect(() => {
     const checkForDemoData = async () => {
-      // Check if any records exist in the database
-      const { count, error } = await supabase
-        .from('invoices')
-        .select('*', { count: 'exact', head: true });
-      
-      if (error) {
-        console.error("Error checking for invoice records:", error);
-        return;
-      }
-      
-      // If no records exist, create a demo record
-      if (count === 0) {
-        await createDemoInvoice();
+      try {
+        // Check if any records exist in the database
+        const { count, error } = await supabase
+          .from('invoices')
+          .select('*', { count: 'exact', head: true });
+        
+        if (error) {
+          console.error("Error checking for invoice records:", error);
+          return;
+        }
+        
+        // If no records exist, create a demo record
+        if (count === 0) {
+          await createDemoInvoice();
+        }
+      } catch (error) {
+        console.error("Error in checkForDemoData:", error);
       }
     };
     
@@ -49,27 +53,43 @@ const TrackingForm: React.FC<TrackingFormProps> = ({
 
   // Create a demo invoice for tracking
   const createDemoInvoice = async () => {
-    console.log("Creating demo invoice as no invoices exist");
-    
-    const demoInvoice = {
-      consignment_no: 'MT-202503657',
-      from_location: 'Imphal, Manipur',
-      to_location: 'Delhi, India',
-      status: 'in-transit',
-      amount: 1250,
-      weight: 5.2,
-      user_id: '00000000-0000-0000-0000-000000000000', // Placeholder ID
-      items: 'Demo Shipment Package'
-    };
-    
-    const { error } = await supabase
-      .from('invoices')
-      .insert(demoInvoice);
-    
-    if (error) {
-      console.error("Error creating demo invoice:", error);
-    } else {
-      console.log("Demo invoice created successfully");
+    try {
+      console.log("Creating demo invoice as no invoices exist");
+      
+      const demoInvoice = {
+        consignment_no: 'MT-202503657',
+        from_location: 'Imphal, Manipur',
+        to_location: 'Delhi, India',
+        status: 'in-transit',
+        amount: 1250,
+        weight: 5.2,
+        user_id: '00000000-0000-0000-0000-000000000000', // Placeholder ID for public tracking
+        items: 'Demo Shipment Package'
+      };
+      
+      // First check if the demo invoice already exists
+      const { data: existingInvoice } = await supabase
+        .from('invoices')
+        .select('*')
+        .eq('consignment_no', demoInvoice.consignment_no)
+        .maybeSingle();
+      
+      if (existingInvoice) {
+        console.log("Demo invoice already exists, skipping creation");
+        return;
+      }
+      
+      const { error } = await supabase
+        .from('invoices')
+        .insert(demoInvoice);
+      
+      if (error) {
+        console.error("Error creating demo invoice:", error);
+      } else {
+        console.log("Demo invoice created successfully");
+      }
+    } catch (error) {
+      console.error("Error in createDemoInvoice:", error);
     }
   };
 
@@ -93,7 +113,7 @@ const TrackingForm: React.FC<TrackingFormProps> = ({
     try {
       console.log("Tracking number:", trackingNumber.trim());
       
-      // Query Supabase for the tracking info - No auth required for tracking
+      // Direct query to Supabase without authentication
       const { data, error } = await supabase
         .from('invoices')
         .select('*')
@@ -125,12 +145,15 @@ const TrackingForm: React.FC<TrackingFormProps> = ({
           onTrackingResult(trackingResult, steps);
         });
       } else {
-        // If the shipment isn't found, try creating a demo invoice with the entered tracking number
-        if (trackingNumber === 'MT-202503657') {
+        // If the shipment isn't found and it's the demo tracking number, create it
+        if (trackingNumber.trim() === 'MT-202503657') {
+          console.log("Creating demo invoice and retrying tracking");
           await createDemoInvoice();
           
           // Try tracking again after creating the demo
-          handleTrackingSubmit(null);
+          setTimeout(() => {
+            handleTrackingSubmit(null);
+          }, 500);
           return;
         }
         
@@ -159,7 +182,21 @@ const TrackingForm: React.FC<TrackingFormProps> = ({
   const fillDemoTracking = async () => {
     try {
       console.log("Fetching demo tracking number");
-      // Using a more direct approach to ensure we can fetch without auth
+      
+      // First check if MT-202503657 exists
+      const { data: demoData } = await supabase
+        .from('invoices')
+        .select('consignment_no')
+        .eq('consignment_no', 'MT-202503657')
+        .maybeSingle();
+      
+      if (demoData) {
+        console.log("Found demo tracking with MT-202503657");
+        setConsignmentNo(demoData.consignment_no);
+        return;
+      }
+      
+      // If not, try to find any invoice
       const { data, error } = await supabase
         .from('invoices')
         .select('consignment_no')
@@ -181,7 +218,9 @@ const TrackingForm: React.FC<TrackingFormProps> = ({
       }
     } catch (error) {
       console.error('Error fetching demo tracking:', error);
-      // Fallback to static demo
+      // Fallback to static demo and create it if it doesn't exist
+      console.log("Using fallback demo tracking number MT-202503657");
+      await createDemoInvoice();
       setConsignmentNo('MT-202503657');
     }
   };
