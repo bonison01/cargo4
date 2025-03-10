@@ -22,14 +22,9 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay }}
       viewport={{ once: true }}
-      whileHover={{ 
-        y: -5,
-        boxShadow: "0 10px 30px -15px rgba(0, 0, 0, 0.1)",
-        transition: { duration: 0.2 }
-      }}
-      className="glass-card rounded-xl p-6 hover:shadow-lg transition-all duration-300 h-full"
+      className="glass-card rounded-xl p-6 hover:shadow-md transition-all duration-300"
     >
-      <div className="bg-mateng-50 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:bg-mateng-100 transition-colors">
+      <div className="bg-mateng-50 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
         <Icon className="h-6 w-6 text-mateng-600" />
       </div>
       <h3 className="text-xl font-semibold mb-2">{title}</h3>
