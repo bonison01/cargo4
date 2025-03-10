@@ -1,89 +1,109 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import Navbar from '@/components/ui/navbar';
 import PageTransition from '@/components/ui/page-transition';
 import InvoiceCard, { InvoiceProps } from '@/components/ui/invoice-card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { FilePlus, Search, Package } from 'lucide-react';
+import { FilePlus, Search, Package, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-
-const demoInvoices: InvoiceProps[] = [
-  {
-    id: '1',
-    consignmentNo: 'MT-2024050001',
-    from: 'Imphal',
-    to: 'Delhi',
-    date: 'May 15, 2024',
-    status: 'in-transit',
-    amount: '₹2,500'
-  },
-  {
-    id: '2',
-    consignmentNo: 'MT-2024050002',
-    from: 'Delhi',
-    to: 'Imphal',
-    date: 'May 14, 2024',
-    status: 'processing',
-    amount: '₹1,800'
-  },
-  {
-    id: '3',
-    consignmentNo: 'MT-2024050003',
-    from: 'Imphal',
-    to: 'Delhi',
-    date: 'May 10, 2024',
-    status: 'delivered',
-    amount: '₹3,200'
-  },
-  {
-    id: '4',
-    consignmentNo: 'MT-2024050004',
-    from: 'Delhi',
-    to: 'Imphal',
-    date: 'May 5, 2024',
-    status: 'delivered',
-    amount: '₹2,100'
-  },
-  {
-    id: '5',
-    consignmentNo: 'MT-2024050005',
-    from: 'Imphal',
-    to: 'Delhi',
-    date: 'May 1, 2024',
-    status: 'delivered',
-    amount: '₹1,950'
-  },
-  {
-    id: '6',
-    consignmentNo: 'MT-2024050006',
-    from: 'Delhi',
-    to: 'Imphal',
-    date: 'May 18, 2024',
-    status: 'pending',
-    amount: '₹2,750'
-  }
-];
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from '@/hooks/use-toast';
 
 const Dashboard = () => {
-  const [searchTerm, setSearchTerm] = React.useState('');
-  const [filteredInvoices, setFilteredInvoices] = React.useState(demoInvoices);
+  const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [invoices, setInvoices] = useState<InvoiceProps[]>([]);
+  const [filteredInvoices, setFilteredInvoices] = useState<InvoiceProps[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState({
+    active: 0,
+    delivered: 0,
+    pending: 0,
+    totalValue: 0
+  });
 
-  React.useEffect(() => {
+  // Fetch invoices from Supabase
+  useEffect(() => {
+    const fetchInvoices = async () => {
+      try {
+        setIsLoading(true);
+        
+        const { data: invoiceData, error } = await supabase
+          .from('invoices')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          throw error;
+        }
+        
+        if (invoiceData) {
+          // Transform to InvoiceProps format
+          const transformedInvoices: InvoiceProps[] = invoiceData.map(invoice => ({
+            id: invoice.id,
+            consignmentNo: invoice.consignment_no,
+            from: invoice.from_location,
+            to: invoice.to_location,
+            date: new Date(invoice.created_at).toLocaleDateString('en-US', {
+              month: 'long',
+              day: 'numeric',
+              year: 'numeric'
+            }),
+            status: invoice.status as 'pending' | 'processing' | 'in-transit' | 'delivered' | 'cancelled',
+            amount: `₹${Number(invoice.amount).toLocaleString('en-IN')}`
+          }));
+          
+          setInvoices(transformedInvoices);
+          setFilteredInvoices(transformedInvoices);
+          
+          // Calculate stats
+          const active = invoiceData.filter(i => 
+            i.status === 'processing' || i.status === 'in-transit'
+          ).length;
+          
+          const delivered = invoiceData.filter(i => i.status === 'delivered').length;
+          const pending = invoiceData.filter(i => i.status === 'pending').length;
+          const totalValue = invoiceData.reduce((sum, i) => sum + Number(i.amount), 0);
+          
+          setStats({
+            active,
+            delivered,
+            pending,
+            totalValue
+          });
+        }
+      } catch (error: any) {
+        console.error('Error fetching invoices:', error);
+        toast({
+          title: "Error fetching invoices",
+          description: error.message || "Could not load your invoices. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchInvoices();
+  }, [toast]);
+
+  // Filter invoices based on search term
+  useEffect(() => {
     if (!searchTerm) {
-      setFilteredInvoices(demoInvoices);
+      setFilteredInvoices(invoices);
       return;
     }
     
-    const filtered = demoInvoices.filter(invoice => 
+    const filtered = invoices.filter(invoice => 
       invoice.consignmentNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
       invoice.from.toLowerCase().includes(searchTerm.toLowerCase()) ||
       invoice.to.toLowerCase().includes(searchTerm.toLowerCase())
     );
     
     setFilteredInvoices(filtered);
-  }, [searchTerm]);
+  }, [searchTerm, invoices]);
 
   return (
     <PageTransition>
@@ -118,7 +138,7 @@ const Dashboard = () => {
                 </div>
                 <h3 className="font-medium">Active Shipments</h3>
               </div>
-              <p className="text-3xl font-bold mb-1">3</p>
+              <p className="text-3xl font-bold mb-1">{stats.active}</p>
               <p className="text-sm text-muted-foreground">Currently in progress</p>
             </div>
             <div className="glass-card rounded-xl p-5 hover:shadow-md transition-all duration-300">
@@ -128,7 +148,7 @@ const Dashboard = () => {
                 </div>
                 <h3 className="font-medium">Delivered</h3>
               </div>
-              <p className="text-3xl font-bold mb-1">28</p>
+              <p className="text-3xl font-bold mb-1">{stats.delivered}</p>
               <p className="text-sm text-muted-foreground">Successfully delivered</p>
             </div>
             <div className="glass-card rounded-xl p-5 hover:shadow-md transition-all duration-300">
@@ -138,7 +158,7 @@ const Dashboard = () => {
                 </div>
                 <h3 className="font-medium">Pending</h3>
               </div>
-              <p className="text-3xl font-bold mb-1">2</p>
+              <p className="text-3xl font-bold mb-1">{stats.pending}</p>
               <p className="text-sm text-muted-foreground">Awaiting processing</p>
             </div>
             <div className="glass-card rounded-xl p-5 hover:shadow-md transition-all duration-300">
@@ -148,7 +168,7 @@ const Dashboard = () => {
                 </div>
                 <h3 className="font-medium">Total Value</h3>
               </div>
-              <p className="text-3xl font-bold mb-1">₹14,300</p>
+              <p className="text-3xl font-bold mb-1">₹{stats.totalValue.toLocaleString('en-IN')}</p>
               <p className="text-sm text-muted-foreground">All shipments</p>
             </div>
           </div>
@@ -169,17 +189,35 @@ const Dashboard = () => {
               </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredInvoices.length > 0 ? (
-                filteredInvoices.map((invoice, index) => (
-                  <InvoiceCard key={invoice.id} invoice={invoice} index={index} />
-                ))
-              ) : (
-                <div className="col-span-full text-center py-12">
-                  <p className="text-lg text-muted-foreground">No invoices found matching your search.</p>
-                </div>
-              )}
-            </div>
+            {isLoading ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-mateng-600" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredInvoices.length > 0 ? (
+                  filteredInvoices.map((invoice, index) => (
+                    <InvoiceCard key={invoice.id} invoice={invoice} index={index} />
+                  ))
+                ) : (
+                  <div className="col-span-full text-center py-12">
+                    <p className="text-lg text-muted-foreground">
+                      {searchTerm 
+                        ? "No invoices found matching your search." 
+                        : "No invoices yet. Create your first invoice!"}
+                    </p>
+                    {!searchTerm && (
+                      <Link to="/invoices/new" className="mt-4 inline-block">
+                        <Button className="bg-mateng-600 hover:bg-mateng-700">
+                          <FilePlus className="mr-2 h-4 w-4" />
+                          Create Invoice
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </main>

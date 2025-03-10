@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Menu, X, Package, UserCircle, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from "@/integrations/supabase/client";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -13,30 +13,47 @@ const Navbar = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  // Check authentication status from localStorage
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    localStorage.getItem('isAuthenticated') === 'true'
-  );
-  const [userName, setUserName] = useState(
-    localStorage.getItem('userName') || ''
-  );
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userName, setUserName] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Update authentication status when localStorage changes
   useEffect(() => {
-    const checkAuthStatus = () => {
-      setIsAuthenticated(localStorage.getItem('isAuthenticated') === 'true');
-      setUserName(localStorage.getItem('userName') || '');
+    const checkAuthStatus = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+          setIsAuthenticated(true);
+          const userData = session.user.user_metadata || {};
+          setUserName(userData.name || userData.email || session.user.email || '');
+        } else {
+          setIsAuthenticated(false);
+          setUserName('');
+        }
+      } catch (error) {
+        console.error('Error checking auth status:', error);
+      } finally {
+        setIsLoading(false);
+      }
     };
     
-    window.addEventListener('storage', checkAuthStatus);
     checkAuthStatus();
     
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+      if (session) {
+        const userData = session.user.user_metadata || {};
+        setUserName(userData.name || userData.email || session.user.email || '');
+      } else {
+        setUserName('');
+      }
+    });
+    
     return () => {
-      window.removeEventListener('storage', checkAuthStatus);
+      subscription.unsubscribe();
     };
   }, []);
 
-  // Check if user is scrolled
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
@@ -45,23 +62,28 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close mobile menu when changing routes
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('userName');
-    setIsAuthenticated(false);
-    setUserName('');
-    
-    toast({
-      title: "Logged out successfully",
-      description: "You have been logged out of your account",
-    });
-    
-    navigate('/');
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      
+      toast({
+        title: "Logged out successfully",
+        description: "You have been logged out of your account",
+      });
+      
+      navigate('/');
+    } catch (error) {
+      console.error('Error logging out:', error);
+      toast({
+        title: "Error logging out",
+        description: "An error occurred while logging out. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const navLinks = [
@@ -86,7 +108,6 @@ const Navbar = () => {
   return (
     <nav className={navbarClasses}>
       <div className="container px-4 mx-auto flex items-center justify-between">
-        {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
           <Package className="h-8 w-8 text-mateng-600" />
           <span className="text-xl font-display font-bold bg-clip-text text-transparent bg-gradient-to-r from-mateng-700 to-mateng-500">
@@ -94,7 +115,6 @@ const Navbar = () => {
           </span>
         </Link>
 
-        {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-8">
           <ul className="flex items-center gap-6">
             {(isAuthenticated ? authenticatedLinks : navLinks).map((link) => (
@@ -146,7 +166,6 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* Mobile Menu Button */}
         <Button 
           variant="ghost" 
           size="icon" 
@@ -161,7 +180,6 @@ const Navbar = () => {
         </Button>
       </div>
 
-      {/* Mobile Menu */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div

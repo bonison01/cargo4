@@ -9,11 +9,8 @@ import { useNavigate } from 'react-router-dom';
 const Register = () => {
   const navigate = useNavigate();
 
-  const handleRegister = (data: any) => {
-    console.log('Registration data:', data);
-    // For demo purposes, set authentication status in localStorage
-    localStorage.setItem('isAuthenticated', 'true');
-    localStorage.setItem('userName', data.name || data.email);
+  const handleRegister = (userData: any) => {
+    console.log('Registration success:', userData);
     
     // Navigate to dashboard
     setTimeout(() => {

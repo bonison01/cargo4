@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from "@/integrations/supabase/client";
 
 const CreateInvoice = () => {
   const { toast } = useToast();
@@ -44,27 +45,49 @@ const CreateInvoice = () => {
       setIsSubmitting(true);
       
       // Generate a unique consignment number if not provided
-      if (!invoiceData.consignmentNo) {
+      let consignmentNo = invoiceData.consignmentNo;
+      if (!consignmentNo) {
         const date = new Date();
         const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-        invoiceData.consignmentNo = `MT-${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${randomNum}`;
+        consignmentNo = `MT-${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${randomNum}`;
       }
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Get current user
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('You must be logged in to create an invoice');
+      }
+      
+      // Save to Supabase
+      const { data, error } = await supabase
+        .from('invoices')
+        .insert({
+          consignment_no: consignmentNo,
+          from_location: invoiceData.from,
+          to_location: invoiceData.to,
+          amount: parseFloat(invoiceData.amount) || 0,
+          items: invoiceData.items,
+          weight: parseFloat(invoiceData.weight) || null,
+          status: 'pending',
+          user_id: session.user.id
+        })
+        .select();
+      
+      if (error) throw error;
       
       toast({
         title: "Invoice created successfully",
-        description: `Consignment number: ${invoiceData.consignmentNo}`,
+        description: `Consignment number: ${consignmentNo}`,
         variant: "default",
       });
       
       navigate('/dashboard');
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       toast({
         title: "Failed to create invoice",
-        description: "An error occurred. Please try again.",
+        description: error.message || "An error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {

@@ -18,11 +18,8 @@ const Login = () => {
   const state = location.state as LocationState;
   const from = state?.from?.pathname || '/dashboard';
 
-  const handleLogin = (data: any) => {
-    console.log('Login data:', data);
-    // For demo purposes, set authentication status in localStorage
-    localStorage.setItem('isAuthenticated', 'true');
-    localStorage.setItem('userName', data.email);
+  const handleLogin = (userData: any) => {
+    console.log('Login success:', userData);
     
     // Navigate to the page they tried to visit or dashboard
     setTimeout(() => {

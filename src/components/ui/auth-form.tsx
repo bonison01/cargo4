@@ -1,11 +1,11 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AlertCircle, CheckCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from "@/integrations/supabase/client";
 
 interface AuthFormProps {
   type: 'login' | 'register';
@@ -79,10 +79,40 @@ const AuthForm: React.FC<AuthFormProps> = ({ type, onSubmit }) => {
     try {
       setIsSubmitting(true);
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      onSubmit(formData);
+      if (type === 'login') {
+        // Supabase login
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
+        });
+        
+        if (error) throw error;
+        
+        onSubmit({ ...data.user, email: formData.email });
+      } else {
+        // Supabase registration
+        const { data, error } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            data: {
+              name: formData.name,
+            }
+          }
+        });
+        
+        if (error) throw error;
+
+        // Create a vendor entry for the new user
+        if (data.user) {
+          await supabase.from('vendors').insert({
+            name: formData.name,
+            user_id: data.user.id
+          });
+        }
+        
+        onSubmit({ ...data.user, email: formData.email, name: formData.name });
+      }
       
       toast({
         title: type === 'login' ? "Logged in successfully" : "Account created successfully",
@@ -92,11 +122,11 @@ const AuthForm: React.FC<AuthFormProps> = ({ type, onSubmit }) => {
         variant: "default",
       });
       
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       toast({
         title: "Authentication error",
-        description: "An error occurred during authentication. Please try again.",
+        description: error.message || "An error occurred during authentication. Please try again.",
         variant: "destructive",
       });
     } finally {

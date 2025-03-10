@@ -9,6 +9,48 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      invoices: {
+        Row: {
+          amount: number
+          consignment_no: string
+          created_at: string | null
+          from_location: string
+          id: string
+          items: string | null
+          status: string | null
+          to_location: string
+          updated_at: string | null
+          user_id: string
+          weight: number | null
+        }
+        Insert: {
+          amount: number
+          consignment_no: string
+          created_at?: string | null
+          from_location: string
+          id?: string
+          items?: string | null
+          status?: string | null
+          to_location: string
+          updated_at?: string | null
+          user_id: string
+          weight?: number | null
+        }
+        Update: {
+          amount?: number
+          consignment_no?: string
+          created_at?: string | null
+          from_location?: string
+          id?: string
+          items?: string | null
+          status?: string | null
+          to_location?: string
+          updated_at?: string | null
+          user_id?: string
+          weight?: number | null
+        }
+        Relationships: []
+      }
       product_photos: {
         Row: {
           created_at: string | null
@@ -89,9 +131,56 @@ export type Database = {
         }
         Relationships: []
       }
+      vendors: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          id: string
+          name: string
+          phone: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      invoice_details: {
+        Row: {
+          amount: number | null
+          consignment_no: string | null
+          created_at: string | null
+          from_location: string | null
+          id: string | null
+          items: string | null
+          status: string | null
+          to_location: string | null
+          updated_at: string | null
+          user_id: string | null
+          vendor_name: string | null
+          vendor_phone: string | null
+          weight: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
