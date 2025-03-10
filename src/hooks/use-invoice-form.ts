@@ -96,22 +96,27 @@ export const useInvoiceForm = (invoiceId?: string) => {
     try {
       setIsSubmitting(true);
       
+      // Get current user session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast({
+          title: "Authentication error",
+          description: "You must be logged in to perform this action",
+          variant: "destructive",
+        });
+        navigate('/login');
+        return;
+      }
+      
+      const userId = session.user.id;
+      
       // Generate a unique consignment number if not provided
       let consignmentNo = invoiceData.consignmentNo;
       if (!consignmentNo) {
         const date = new Date();
         const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
         consignmentNo = `MT-${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${randomNum}`;
-      }
-      
-      // Get current user for new invoices
-      let userId = null;
-      if (!invoiceId) {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          throw new Error('You must be logged in to create an invoice');
-        }
-        userId = session.user.id;
       }
       
       // Update or create invoice
@@ -127,7 +132,8 @@ export const useInvoiceForm = (invoiceId?: string) => {
             amount: parseFloat(invoiceData.amount) || 0,
             items: invoiceData.items,
             weight: parseFloat(invoiceData.weight) || null,
-            status: invoiceData.status
+            status: invoiceData.status,
+            // Don't update user_id when editing
           })
           .eq('id', invoiceId)
           .select();
@@ -148,7 +154,10 @@ export const useInvoiceForm = (invoiceId?: string) => {
           .select();
       }
       
-      if (result.error) throw result.error;
+      if (result.error) {
+        console.error('Supabase error:', result.error);
+        throw result.error;
+      }
       
       toast({
         title: invoiceId ? "Invoice updated successfully" : "Invoice created successfully",
