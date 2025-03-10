@@ -3,42 +3,20 @@ import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Creates a demo invoice for tracking if it doesn't already exist
+ * Note: This function now delegates to an edge function to bypass RLS
  */
 export const createDemoInvoice = async (): Promise<void> => {
   try {
-    console.log("Creating demo invoice as no invoices exist");
+    console.log("Creating demo invoice through edge function");
     
-    const demoInvoice = {
-      consignment_no: 'MT-202503657',
-      from_location: 'Imphal, Manipur',
-      to_location: 'Delhi, India',
-      status: 'in-transit',
-      amount: 1250,
-      weight: 5.2,
-      user_id: '00000000-0000-0000-0000-000000000000', // Placeholder ID for public tracking
-      items: 'Demo Shipment Package'
-    };
-    
-    // First check if the demo invoice already exists
-    const { data: existingInvoice } = await supabase
-      .from('invoices')
-      .select('*')
-      .eq('consignment_no', demoInvoice.consignment_no)
-      .maybeSingle();
-    
-    if (existingInvoice) {
-      console.log("Demo invoice already exists, skipping creation");
-      return;
-    }
-    
-    const { error } = await supabase
-      .from('invoices')
-      .insert(demoInvoice);
+    const { data, error } = await supabase.functions.invoke('create-demo-invoice', {
+      body: { trackingNumber: 'MT-202503657' }
+    });
     
     if (error) {
       console.error("Error creating demo invoice:", error);
     } else {
-      console.log("Demo invoice created successfully");
+      console.log("Demo invoice created successfully via edge function:", data);
     }
   } catch (error) {
     console.error("Error in createDemoInvoice:", error);
@@ -52,35 +30,22 @@ export const fetchDemoTrackingNumber = async (): Promise<string> => {
   try {
     console.log("Fetching demo tracking number");
     
-    // First check if MT-202503657 exists
-    const { data: demoData } = await supabase
-      .from('invoices')
-      .select('consignment_no')
-      .eq('consignment_no', 'MT-202503657')
-      .maybeSingle();
-    
-    if (demoData) {
-      console.log("Found demo tracking with MT-202503657");
-      return demoData.consignment_no;
-    }
-    
-    // If not, try to find any invoice
-    const { data, error } = await supabase
-      .from('invoices')
-      .select('consignment_no')
-      .limit(1);
+    // Get a demo tracking number from public-tracking function
+    const { data, error } = await supabase.functions.invoke('public-tracking', {
+      body: { mode: 'demo' }
+    });
     
     if (error) {
       console.error("Demo tracking error:", error);
       throw error;
     }
     
-    if (data && data.length > 0) {
-      console.log("Found demo tracking:", data[0].consignment_no);
-      return data[0].consignment_no;
+    if (data && data.demoConsignment) {
+      console.log("Found demo tracking:", data.demoConsignment);
+      return data.demoConsignment;
     } else {
-      // If no invoices exist, create one and use it
-      console.log("No invoices found, creating demo invoice");
+      // If no demo invoice exists, trigger creation and use the standard demo number
+      console.log("No demo invoice found, creating one");
       await createDemoInvoice();
       return 'MT-202503657';
     }
@@ -98,18 +63,18 @@ export const fetchDemoTrackingNumber = async (): Promise<string> => {
  */
 export const checkForDemoData = async (): Promise<void> => {
   try {
-    // Check if any records exist in the database
-    const { count, error } = await supabase
-      .from('invoices')
-      .select('*', { count: 'exact', head: true });
+    // Check if demo invoice exists through the public function
+    const { data, error } = await supabase.functions.invoke('public-tracking', {
+      body: { mode: 'check-demo' }
+    });
     
     if (error) {
-      console.error("Error checking for invoice records:", error);
+      console.error("Error checking for demo data:", error);
       return;
     }
     
-    // If no records exist, create a demo record
-    if (count === 0) {
+    // If no demo record exists, create it
+    if (!data.demoExists) {
       await createDemoInvoice();
     }
   } catch (error) {

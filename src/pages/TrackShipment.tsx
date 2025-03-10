@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import Navbar from '@/components/ui/navbar/navbar';
@@ -21,30 +20,27 @@ const TrackShipment = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [trackingSteps, setTrackingSteps] = useState<TrackingStep[]>([]);
 
-  // Check if we need to create a demo record if none exist
+  // Check if we need to create demo data or pre-fill tracking
   useEffect(() => {
-    const checkForDemoData = async () => {
+    const initializeData = async () => {
       try {
-        const { count, error } = await supabase
-          .from('invoices')
-          .select('*', { count: 'exact', head: true });
-        
-        if (error) {
-          console.error("Error checking for invoice records:", error);
-          return;
-        }
-        
-        // If no params and no data, automatically set the consignment number
-        if (count === 0 && !consignmentParam) {
-          console.log("No invoices found and no consignment parameter, setting demo consignment number");
-          setConsignmentNo('MT-202503657');
+        // Check if we need a demo consignment
+        if (!consignmentParam) {
+          const { data } = await supabase.functions.invoke('public-tracking', {
+            body: { mode: 'check-demo' }
+          });
+          
+          if (!data.demoExists) {
+            console.log("No demo data found, setting demo consignment number");
+            setConsignmentNo('MT-202503657');
+          }
         }
       } catch (error) {
-        console.error("Error in checkForDemoData:", error);
+        console.error("Error initializing data:", error);
       }
     };
     
-    checkForDemoData();
+    initializeData();
   }, [consignmentParam]);
 
   // Auto-track if consignment number is provided in URL

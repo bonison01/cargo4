@@ -12,21 +12,20 @@ export const trackShipment = async (
   try {
     console.log("Tracking number:", trackingNumber.trim());
     
-    // Direct query to Supabase without authentication
-    const { data, error } = await supabase
-      .from('invoices')
-      .select('*')
-      .eq('consignment_no', trackingNumber.trim())
-      .maybeSingle();
+    // Use a public function to avoid RLS policy restrictions for tracking
+    const { data: publicTrackingData, error: publicTrackingError } = await supabase.functions.invoke('public-tracking', {
+      body: { trackingNumber: trackingNumber.trim() }
+    });
     
-    if (error) {
-      console.error("Supabase error:", error);
-      throw error;
+    if (publicTrackingError) {
+      console.error("Error invoking public tracking function:", publicTrackingError);
+      throw publicTrackingError;
     }
     
-    console.log("Tracking result:", data);
+    console.log("Public tracking result:", publicTrackingData);
     
-    if (data) {
+    if (publicTrackingData?.invoice) {
+      const data = publicTrackingData.invoice;
       const { getEstimatedDelivery, getCurrentLocation, generateTrackingSteps } = await import('./tracking-utils');
       
       const trackingResult = {
@@ -47,14 +46,17 @@ export const trackShipment = async (
       // Only create demo invoice for the specific demo tracking number
       if (trackingNumber.trim() === 'MT-202503657') {
         console.log("Creating demo invoice and retrying tracking");
-        await createDemoInvoice();
+        // Use the edge function to create the demo invoice to bypass RLS
+        await supabase.functions.invoke('create-demo-invoice', {
+          body: { trackingNumber: trackingNumber.trim() }
+        });
         
         // Try tracking again after creating the demo
         return new Promise((resolve) => {
           setTimeout(async () => {
             const result = await trackShipment(trackingNumber);
             resolve(result);
-          }, 500);
+          }, 1000); // Increased timeout to give the function time to complete
         });
       }
       
