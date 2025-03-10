@@ -1,10 +1,10 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Truck, PackageCheck } from 'lucide-react';
+import { MapPin, Truck, PackageCheck, Share2, Twitter, Facebook, Mail, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import TrackTimeline from '@/components/ui/track-timeline';
 import { TrackingResult } from './tracking-utils';
+import { toast } from 'sonner';
 
 interface TrackingResultDisplayProps {
   trackingResult: TrackingResult | null;
@@ -18,6 +18,32 @@ const TrackingResultDisplay: React.FC<TrackingResultDisplayProps> = ({
   onViewInvoice
 }) => {
   if (!trackingResult) return null;
+  
+  const handleCopyLink = () => {
+    const url = new URL(window.location.href);
+    navigator.clipboard.writeText(url.toString())
+      .then(() => toast.success('Tracking link copied to clipboard'))
+      .catch(() => toast.error('Failed to copy link'));
+  };
+  
+  const handleShareTwitter = () => {
+    const url = encodeURIComponent(window.location.href);
+    const text = encodeURIComponent(`Track my shipment #${trackingResult.consignmentNo} from ${trackingResult.origin} to ${trackingResult.destination}`);
+    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank');
+  };
+  
+  const handleShareFacebook = () => {
+    const url = encodeURIComponent(window.location.href);
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+  };
+  
+  const handleShareEmail = () => {
+    const subject = encodeURIComponent(`Track my shipment #${trackingResult.consignmentNo}`);
+    const body = encodeURIComponent(
+      `Track my shipment #${trackingResult.consignmentNo} from ${trackingResult.origin} to ${trackingResult.destination}. Current status: ${trackingResult.status}. Check it here: ${window.location.href}`
+    );
+    window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
+  };
 
   return (
     <motion.div
@@ -94,7 +120,46 @@ const TrackingResultDisplay: React.FC<TrackingResultDisplayProps> = ({
             </div>
           </div>
           
-          <div className="mt-4 flex justify-end">
+          <div className="mt-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex flex-wrap gap-2">
+              <p className="text-sm text-muted-foreground mr-2 w-full sm:w-auto">Share:</p>
+              <Button 
+                onClick={handleCopyLink} 
+                size="icon" 
+                variant="outline" 
+                className="h-8 w-8"
+                title="Copy link"
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+              <Button 
+                onClick={handleShareTwitter} 
+                size="icon" 
+                variant="outline" 
+                className="h-8 w-8"
+                title="Share on Twitter"
+              >
+                <Twitter className="h-4 w-4" />
+              </Button>
+              <Button 
+                onClick={handleShareFacebook}
+                size="icon" 
+                variant="outline" 
+                className="h-8 w-8"
+                title="Share on Facebook"
+              >
+                <Facebook className="h-4 w-4" />
+              </Button>
+              <Button 
+                onClick={handleShareEmail}
+                size="icon" 
+                variant="outline" 
+                className="h-8 w-8"
+                title="Share via Email"
+              >
+                <Mail className="h-4 w-4" />
+              </Button>
+            </div>
             <Button 
               onClick={onViewInvoice}
               className="text-sm"
