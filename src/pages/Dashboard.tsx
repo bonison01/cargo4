@@ -1,7 +1,6 @@
-
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import Navbar from '@/components/ui/navbar';
+import Navbar from '@/components/ui/navbar/navbar';
 import PageTransition from '@/components/ui/page-transition';
 import InvoiceCard, { InvoiceProps } from '@/components/ui/invoice-card';
 import { Button } from '@/components/ui/button';
@@ -24,7 +23,6 @@ const Dashboard = () => {
     totalValue: 0
   });
 
-  // Fetch invoices from Supabase
   useEffect(() => {
     const fetchInvoices = async () => {
       try {
@@ -40,7 +38,6 @@ const Dashboard = () => {
         }
         
         if (invoiceData) {
-          // Transform to InvoiceProps format
           const transformedInvoices: InvoiceProps[] = invoiceData.map(invoice => ({
             id: invoice.id,
             consignmentNo: invoice.consignment_no,
@@ -58,7 +55,6 @@ const Dashboard = () => {
           setInvoices(transformedInvoices);
           setFilteredInvoices(transformedInvoices);
           
-          // Calculate stats
           const active = invoiceData.filter(i => 
             i.status === 'processing' || i.status === 'in-transit'
           ).length;
@@ -89,7 +85,6 @@ const Dashboard = () => {
     fetchInvoices();
   }, [toast]);
 
-  // Filter invoices based on search term
   useEffect(() => {
     if (!searchTerm) {
       setFilteredInvoices(invoices);
@@ -129,7 +124,6 @@ const Dashboard = () => {
             </Link>
           </div>
           
-          {/* Quick Actions */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <div className="glass-card rounded-xl p-5 hover:shadow-md transition-all duration-300">
               <div className="flex items-center mb-2">
@@ -173,7 +167,6 @@ const Dashboard = () => {
             </div>
           </div>
           
-          {/* Recent Invoices */}
           <div className="mb-8">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
               <h2 className="text-2xl font-semibold">Recent Invoices</h2>

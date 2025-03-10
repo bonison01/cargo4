@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
-import Navbar from '@/components/ui/navbar';
+import Navbar from '@/components/ui/navbar/navbar';
 import HeroSection from '@/components/ui/hero-section';
 import FeatureCard from '@/components/ui/feature-card';
 import HowItWorks from '@/components/ui/how-it-works';
@@ -57,7 +56,6 @@ const Index = () => {
       <main className="overflow-hidden">
         <HeroSection />
         
-        {/* Features Section */}
         <section className="py-20">
           <div className="container px-4 mx-auto">
             <div className="max-w-3xl mx-auto text-center mb-12">
@@ -97,7 +95,6 @@ const Index = () => {
         
         <HowItWorks />
         
-        {/* CTA Section */}
         <section className="py-20 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-mateng-600/10 to-mateng-400/5 z-0"></div>
           <div className="container px-4 mx-auto relative z-10">
@@ -142,7 +139,6 @@ const Index = () => {
           </div>
         </section>
         
-        {/* Footer */}
         <footer className="bg-background py-12 border-t border-border">
           <div className="container px-4 mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8">

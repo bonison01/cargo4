@@ -1,7 +1,6 @@
-
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import Navbar from '@/components/ui/navbar';
+import Navbar from '@/components/ui/navbar/navbar';
 import PageTransition from '@/components/ui/page-transition';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
@@ -19,7 +18,6 @@ const AdminDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // Check if user is admin
   useEffect(() => {
     const checkAdminStatus = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -28,8 +26,6 @@ const AdminDashboard = () => {
         return;
       }
       
-      // In a real application, you would check admin status from a user_roles table
-      // For this demo, we'll just check the email domain
       const userEmail = session.user.email || '';
       setIsAdmin(userEmail.endsWith('@mateng.com') || userEmail.includes('admin'));
       
@@ -45,14 +41,11 @@ const AdminDashboard = () => {
     checkAdminStatus();
   }, [toast]);
 
-  // Fetch all invoices from Supabase
   useEffect(() => {
     const fetchAllInvoices = async () => {
       try {
         setIsLoading(true);
         
-        // For a real application with proper admin checks,
-        // you'd need a special admin RLS policy or an edge function
         const { data: invoiceData, error } = await supabase
           .from('invoices')
           .select('*, user_id (email)')
@@ -83,7 +76,6 @@ const AdminDashboard = () => {
     }
   }, [isAdmin, toast]);
 
-  // Filter invoices based on search term
   useEffect(() => {
     if (!searchTerm) {
       setFilteredInvoices(invoices);
@@ -145,7 +137,6 @@ const AdminDashboard = () => {
             </Link>
           </div>
           
-          {/* Search */}
           <div className="mb-8">
             <div className="relative w-full md:w-96 mb-6">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />

@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
-import Navbar from '@/components/ui/navbar';
+import Navbar from '@/components/ui/navbar/navbar';
 import AuthForm from '@/components/ui/auth-form';
 import PageTransition from '@/components/ui/page-transition';
 import { useNavigate } from 'react-router-dom';
