@@ -47,12 +47,12 @@ const TrackShipment = () => {
     setIsLoading(true);
     
     try {
-      // Query Supabase for the actual tracking info
+      // Query Supabase for the actual tracking info - using maybeSingle() instead of single()
       const { data, error } = await supabase
         .from('invoices')
         .select('*')
         .eq('consignment_no', trackingNumber)
-        .single();
+        .maybeSingle();
       
       if (error) {
         throw error;
@@ -66,6 +66,7 @@ const TrackShipment = () => {
           destination: data.to_location,
           estimatedDelivery: getEstimatedDelivery(data.created_at),
           currentLocation: getCurrentLocation(data.status, data.from_location, data.to_location),
+          id: data.id,
         });
         
         // Generate tracking steps
