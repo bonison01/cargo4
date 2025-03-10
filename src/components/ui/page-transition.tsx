@@ -6,17 +6,40 @@ interface PageTransitionProps {
   children: React.ReactNode;
 }
 
-const variants = {
-  hidden: { opacity: 0 },
-  enter: { opacity: 1, transition: { duration: 0.4, ease: [0.61, 1, 0.88, 1] } },
-  exit: { opacity: 0, transition: { duration: 0.3, ease: [0.61, 1, 0.88, 1] } }
+const pageVariants = {
+  initial: { 
+    opacity: 0,
+    y: 8
+  },
+  enter: { 
+    opacity: 1, 
+    y: 0,
+    transition: { 
+      duration: 0.4, 
+      ease: [0.61, 1, 0.88, 1],
+      staggerChildren: 0.1
+    }
+  },
+  exit: { 
+    opacity: 0, 
+    y: 8,
+    transition: { 
+      duration: 0.3, 
+      ease: [0.61, 1, 0.88, 1] 
+    }
+  }
+};
+
+const childVariants = {
+  initial: { opacity: 0, y: 20 },
+  enter: { opacity: 1, y: 0 }
 };
 
 const PageTransition: React.FC<PageTransitionProps> = ({ children }) => {
   return (
     <motion.div
-      variants={variants}
-      initial="hidden"
+      variants={pageVariants}
+      initial="initial"
       animate="enter"
       exit="exit"
       className="h-full"
