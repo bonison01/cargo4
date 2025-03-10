@@ -2,11 +2,12 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from "@/integrations/supabase/client";
+import { Invoice } from '@/types/invoice';
 
 export const useInvoiceSearch = (isAdmin: boolean) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [invoices, setInvoices] = useState<any[]>([]);
-  const [filteredInvoices, setFilteredInvoices] = useState<any[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [filteredInvoices, setFilteredInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
@@ -25,8 +26,8 @@ export const useInvoiceSearch = (isAdmin: boolean) => {
         }
         
         if (invoiceData) {
-          setInvoices(invoiceData);
-          setFilteredInvoices(invoiceData);
+          setInvoices(invoiceData as Invoice[]);
+          setFilteredInvoices(invoiceData as Invoice[]);
         }
       } catch (error: any) {
         console.error('Error fetching invoices:', error);

@@ -4,16 +4,7 @@ import { Link } from 'react-router-dom';
 import { Eye, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-
-interface Invoice {
-  id: string;
-  consignment_no: string;
-  from_location: string;
-  to_location: string;
-  amount: number;
-  status: string;
-  created_at: string;
-}
+import { Invoice } from '@/types/invoice';
 
 interface InvoiceTableProps {
   invoices: Invoice[];

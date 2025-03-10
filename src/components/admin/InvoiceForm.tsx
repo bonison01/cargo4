@@ -4,38 +4,26 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { InvoiceFormData } from '@/types/invoice';
 
-type InvoiceFormProps = {
-  invoiceData: {
-    consignmentNo: string;
-    from: string;
-    to: string;
-    amount: string;
-    items: string;
-    weight: string;
-    status: string;
-    handlingFee: string;
-    pickupFee: string;
-    deliveryFee: string;
-    dimensions: string;
-  };
+interface InvoiceFormProps {
+  invoiceData: InvoiceFormData;
   handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleStatusChange: (value: string) => void;
   handleSubmit: (e: React.FormEvent) => void;
   isSubmitting: boolean;
   isEditing: boolean;
-};
+}
 
-const InvoiceForm = ({ 
+const InvoiceForm: React.FC<InvoiceFormProps> = ({ 
   invoiceData, 
   handleChange, 
   handleStatusChange, 
   handleSubmit, 
   isSubmitting,
   isEditing
-}: InvoiceFormProps) => {
+}) => {
   const navigate = useNavigate();
 
   return (

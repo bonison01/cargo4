@@ -3,8 +3,9 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
+import { Invoice, InvoiceFormData } from '@/types/invoice';
 
-const defaultInvoiceData = {
+const defaultInvoiceData: InvoiceFormData = {
   consignmentNo: '',
   from: '',
   to: '',
@@ -19,7 +20,7 @@ const defaultInvoiceData = {
 };
 
 export const useInvoiceForm = (invoiceId?: string) => {
-  const [invoiceData, setInvoiceData] = useState(defaultInvoiceData);
+  const [invoiceData, setInvoiceData] = useState<InvoiceFormData>(defaultInvoiceData);
   const [isLoading, setIsLoading] = useState(!!invoiceId);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -42,14 +43,15 @@ export const useInvoiceForm = (invoiceId?: string) => {
         if (error) throw error;
         
         if (data) {
+          const invoice = data as Invoice;
           setInvoiceData({
-            consignmentNo: data.consignment_no || '',
-            from: data.from_location || '',
-            to: data.to_location || '',
-            amount: data.amount?.toString() || '',
-            items: data.items || '',
-            weight: data.weight?.toString() || '',
-            status: data.status || 'pending',
+            consignmentNo: invoice.consignment_no || '',
+            from: invoice.from_location || '',
+            to: invoice.to_location || '',
+            amount: invoice.amount?.toString() || '',
+            items: invoice.items || '',
+            weight: invoice.weight?.toString() || '',
+            status: invoice.status || 'pending',
             handlingFee: '200', // Default values as they're not in the database yet
             pickupFee: '100',
             deliveryFee: '150',
