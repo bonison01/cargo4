@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import Navbar from '@/components/ui/navbar';
+import Navbar from '@/components/ui/navbar/navbar';
 import PageTransition from '@/components/ui/page-transition';
 import { Button } from '@/components/ui/button';
 import { Link, useParams, useNavigate } from 'react-router-dom';
