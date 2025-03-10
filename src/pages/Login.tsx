@@ -4,17 +4,29 @@ import { Helmet } from 'react-helmet-async';
 import Navbar from '@/components/ui/navbar';
 import AuthForm from '@/components/ui/auth-form';
 import PageTransition from '@/components/ui/page-transition';
-import { useNavigate } from 'react-router-dom';
-import { toast } from '@/hooks/use-toast';
+import { useNavigate, useLocation } from 'react-router-dom';
+
+interface LocationState {
+  from?: {
+    pathname: string;
+  };
+}
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const state = location.state as LocationState;
+  const from = state?.from?.pathname || '/dashboard';
 
   const handleLogin = (data: any) => {
     console.log('Login data:', data);
-    // For demo purposes, simulate successful login
+    // For demo purposes, set authentication status in localStorage
+    localStorage.setItem('isAuthenticated', 'true');
+    localStorage.setItem('userName', data.email);
+    
+    // Navigate to the page they tried to visit or dashboard
     setTimeout(() => {
-      navigate('/dashboard');
+      navigate(from);
     }, 500);
   };
 

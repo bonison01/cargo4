@@ -11,7 +11,11 @@ const Register = () => {
 
   const handleRegister = (data: any) => {
     console.log('Registration data:', data);
-    // For demo purposes, simulate successful registration
+    // For demo purposes, set authentication status in localStorage
+    localStorage.setItem('isAuthenticated', 'true');
+    localStorage.setItem('userName', data.name || data.email);
+    
+    // Navigate to dashboard
     setTimeout(() => {
       navigate('/dashboard');
     }, 500);
