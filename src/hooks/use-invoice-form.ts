@@ -17,6 +17,14 @@ const defaultInvoiceData: InvoiceFormData = {
   pickupFee: '100',
   deliveryFee: '150',
   dimensions: '',
+  pickupDate: new Date().toISOString().split('T')[0], // Today's date as default
+  originCity: '',
+  destinationCity: '',
+  senderInfo: '',
+  receiverInfo: '',
+  itemCount: '1',
+  itemPhoto: '',
+  itemDescription: '',
 };
 
 export const useInvoiceForm = (invoiceId?: string) => {
@@ -56,6 +64,14 @@ export const useInvoiceForm = (invoiceId?: string) => {
             pickupFee: '100',
             deliveryFee: '150',
             dimensions: '',
+            pickupDate: invoice.pickup_date || new Date().toISOString().split('T')[0],
+            originCity: invoice.origin_city || '',
+            destinationCity: invoice.destination_city || '',
+            senderInfo: invoice.sender_info || '',
+            receiverInfo: invoice.receiver_info || '',
+            itemCount: invoice.item_count?.toString() || '1',
+            itemPhoto: invoice.item_photo || '',
+            itemDescription: invoice.item_description || '',
           });
         }
       } catch (error: any) {
@@ -73,7 +89,7 @@ export const useInvoiceForm = (invoiceId?: string) => {
     fetchInvoiceData();
   }, [invoiceId, toast]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setInvoiceData(prev => ({ ...prev, [name]: value }));
   };
@@ -86,7 +102,7 @@ export const useInvoiceForm = (invoiceId?: string) => {
     e.preventDefault();
     
     // Validation
-    if (!invoiceData.from || !invoiceData.to || !invoiceData.amount) {
+    if (!invoiceData.from || !invoiceData.to || !invoiceData.originCity || !invoiceData.destinationCity) {
       toast({
         title: "Missing information",
         description: "Please fill in all required fields",
@@ -135,6 +151,14 @@ export const useInvoiceForm = (invoiceId?: string) => {
             items: invoiceData.items,
             weight: parseFloat(invoiceData.weight) || null,
             status: invoiceData.status,
+            pickup_date: invoiceData.pickupDate,
+            origin_city: invoiceData.originCity,
+            destination_city: invoiceData.destinationCity,
+            sender_info: invoiceData.senderInfo,
+            receiver_info: invoiceData.receiverInfo,
+            item_count: parseInt(invoiceData.itemCount) || 1,
+            item_photo: invoiceData.itemPhoto,
+            item_description: invoiceData.itemDescription,
             // Don't update user_id when editing
           })
           .eq('id', invoiceId)
@@ -147,11 +171,19 @@ export const useInvoiceForm = (invoiceId?: string) => {
             consignment_no: consignmentNo,
             from_location: invoiceData.from,
             to_location: invoiceData.to,
-            amount: parseFloat(invoiceData.amount) || 0,
+            amount: 0, // For new invoices, amount is set to 0 and will be updated by admin
             items: invoiceData.items,
             weight: parseFloat(invoiceData.weight) || null,
-            status: invoiceData.status,
-            user_id: userId
+            status: 'pending', // Always set to pending for new invoices
+            user_id: userId,
+            pickup_date: invoiceData.pickupDate,
+            origin_city: invoiceData.originCity,
+            destination_city: invoiceData.destinationCity,
+            sender_info: invoiceData.senderInfo,
+            receiver_info: invoiceData.receiverInfo,
+            item_count: parseInt(invoiceData.itemCount) || 1,
+            item_photo: invoiceData.itemPhoto,
+            item_description: invoiceData.itemDescription,
           })
           .select();
       }
