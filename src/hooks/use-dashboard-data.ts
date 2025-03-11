@@ -18,6 +18,14 @@ interface RawInvoice {
   user_id?: string;
   weight?: number | null;
   items?: string | null;
+  pickup_date?: string | null;
+  origin_city?: string | null;
+  destination_city?: string | null;
+  sender_info?: string | null;
+  receiver_info?: string | null;
+  item_count?: number | null;
+  item_photo?: string | null;
+  item_description?: string | null;
 }
 
 export const useDashboardData = () => {
@@ -54,8 +62,8 @@ export const useDashboardData = () => {
           const transformedInvoices: InvoiceProps[] = rawInvoices.map((invoice) => ({
             id: invoice.id,
             consignmentNo: invoice.consignment_no,
-            from: invoice.from_location,
-            to: invoice.to_location,
+            from: invoice.origin_city || invoice.from_location,
+            to: invoice.destination_city || invoice.to_location,
             date: new Date(invoice.created_at).toLocaleDateString('en-US', {
               month: 'long',
               day: 'numeric',
@@ -63,7 +71,7 @@ export const useDashboardData = () => {
             }),
             // Cast to the union type since we know the values match our expected types
             status: invoice.status as Invoice['status'],
-            amount: `₹${Number(invoice.amount).toLocaleString('en-IN')}`
+            amount: invoice.amount ? `₹${Number(invoice.amount).toLocaleString('en-IN')}` : 'Pending'
           }));
           
           setInvoices(transformedInvoices);
