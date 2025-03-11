@@ -1,0 +1,81 @@
+
+import { Invoice } from "@/types/invoice";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+
+export const generateInvoicePDF = (invoice: Invoice) => {
+  const doc = new jsPDF();
+  
+  // Add logo and header
+  doc.setFontSize(20);
+  doc.text("Mateng Shipping Invoice", 20, 20);
+  
+  // Invoice details
+  doc.setFontSize(12);
+  doc.text(`Invoice #${invoice.consignment_no}`, 20, 40);
+  doc.text(`Date: ${new Date(invoice.created_at).toLocaleDateString()}`, 20, 50);
+  
+  // Shipping details
+  doc.text("Shipping Details", 20, 70);
+  doc.text(`From: ${invoice.from_location}`, 20, 80);
+  doc.text(`To: ${invoice.to_location}`, 20, 90);
+  
+  // Calculate charges
+  const basePrice = Math.round(Number(invoice.amount) * 0.1);
+  const weightCharges = invoice.weight ? Math.round(Number(invoice.weight) * 150) : 0;
+  const handlingFee = 200;
+  const pickupCharges = 100;
+  const deliveryCharges = 150;
+  const docketCharges = 80;
+  const tax = Math.round((basePrice + weightCharges + handlingFee + pickupCharges + deliveryCharges + docketCharges) * 0.18);
+  const total = basePrice + weightCharges + handlingFee + pickupCharges + deliveryCharges + docketCharges + tax;
+  
+  // Charges table
+  (doc as any).autoTable({
+    startY: 100,
+    head: [['Description', 'Amount']],
+    body: [
+      ['Base Price', `₹${basePrice}`],
+      ['Weight Charges (150/kg)', `₹${weightCharges}`],
+      ['Handling Fee', `₹${handlingFee}`],
+      ['Pickup Charges', `₹${pickupCharges}`],
+      ['Delivery Charges', `₹${deliveryCharges}`],
+      ['Docket Charges', `₹${docketCharges}`],
+      ['Tax (18% GST)', `₹${tax}`],
+      ['Total', `₹${total}`],
+    ],
+  });
+  
+  // Footer
+  const pageHeight = doc.internal.pageSize.height;
+  doc.text("Thank you for choosing Mateng Shipping!", 20, pageHeight - 20);
+  
+  return doc;
+};
+
+export const generateShippingLabel = (invoice: Invoice) => {
+  const doc = new jsPDF();
+  
+  // Add logo and header
+  doc.setFontSize(16);
+  doc.text("Mateng Shipping Label", 20, 20);
+  
+  // Barcode or QR code could be added here
+  doc.setFontSize(14);
+  doc.text(`Consignment #${invoice.consignment_no}`, 20, 40);
+  
+  // From address
+  doc.setFontSize(12);
+  doc.text("From:", 20, 60);
+  doc.text(invoice.from_location, 20, 70);
+  
+  // To address
+  doc.text("To:", 20, 90);
+  doc.text(invoice.to_location, 20, 100);
+  
+  // Additional details
+  doc.text(`Weight: ${invoice.weight}kg`, 20, 120);
+  doc.text(`Date: ${new Date(invoice.created_at).toLocaleDateString()}`, 20, 130);
+  
+  return doc;
+};

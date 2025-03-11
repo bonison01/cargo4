@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import Navbar from '@/components/ui/navbar/navbar';
@@ -9,6 +8,7 @@ import { MapPin, Package, ArrowRight, Printer, Clock, Edit, FileText, Loader2 } 
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from '@/hooks/use-toast';
 import TrackTimeline, { TrackingStep } from '@/components/ui/track-timeline';
+import { generateInvoicePDF, generateShippingLabel } from "@/utils/pdf-utils";
 
 const InvoiceDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -19,7 +19,6 @@ const InvoiceDetails = () => {
   const [trackingSteps, setTrackingSteps] = useState<TrackingStep[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
   
-  // Check if user is admin
   useEffect(() => {
     const checkAdminStatus = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -32,7 +31,6 @@ const InvoiceDetails = () => {
     checkAdminStatus();
   }, []);
 
-  // Fetch invoice details
   useEffect(() => {
     const fetchInvoiceDetails = async () => {
       try {
@@ -51,20 +49,17 @@ const InvoiceDetails = () => {
         if (data) {
           setInvoice(data);
           
-          // Generate tracking steps based on status
           const steps: TrackingStep[] = [];
           const statuses = ['pending', 'processing', 'in-transit', 'delivered'];
           const statusLabels = ['Order Placed', 'Processing', 'In Transit', 'Delivered'];
           const createdDate = new Date(data.created_at);
           
-          // Find the current status index
           const currentStatusIndex = statuses.indexOf(data.status);
           
           for (let i = 0; i < statuses.length; i++) {
             const isCompleted = i <= currentStatusIndex;
             const isCurrent = i === currentStatusIndex;
             
-            // Calculate a date that's i days after created date
             const stepDate = new Date(createdDate);
             stepDate.setDate(createdDate.getDate() + i);
             
@@ -100,6 +95,20 @@ const InvoiceDetails = () => {
       fetchInvoiceDetails();
     }
   }, [id, toast]);
+
+  const handleDownloadInvoice = () => {
+    if (invoice) {
+      const doc = generateInvoicePDF(invoice);
+      doc.save(`mateng-invoice-${invoice.consignment_no}.pdf`);
+    }
+  };
+
+  const handlePrintLabel = () => {
+    if (invoice) {
+      const doc = generateShippingLabel(invoice);
+      doc.save(`mateng-shipping-label-${invoice.consignment_no}.pdf`);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -148,7 +157,7 @@ const InvoiceDetails = () => {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <h1 className="text-3xl font-bold">Invoice Details</h1>
-                <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                <span className={`text-sm font-bold px-3 py-1.5 rounded-full ${
                   invoice.status === 'delivered' 
                     ? 'bg-status-delivered/10 text-status-delivered' 
                     : invoice.status === 'in-transit'
@@ -173,16 +182,15 @@ const InvoiceDetails = () => {
                   </Button>
                 </Link>
               )}
-              <Button variant="outline" className="flex items-center gap-2" onClick={() => window.print()}>
+              <Button variant="outline" className="flex items-center gap-2" onClick={handlePrintLabel}>
                 <Printer className="h-4 w-4" />
-                Print Invoice
+                Print Shipping Label
               </Button>
             </div>
           </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-8">
-              {/* Shipment Information */}
               <div className="glass-card rounded-xl p-6">
                 <div className="flex items-center gap-2 mb-6">
                   <Package className="h-5 w-5 text-mateng-600" />
@@ -237,7 +245,6 @@ const InvoiceDetails = () => {
                 </div>
               </div>
               
-              {/* Tracking Timeline */}
               <div className="glass-card rounded-xl p-6">
                 <div className="flex items-center gap-2 mb-6">
                   <Clock className="h-5 w-5 text-mateng-600" />
@@ -248,8 +255,7 @@ const InvoiceDetails = () => {
               </div>
             </div>
             
-            <div className="space-y-8">
-              {/* Pricing Summary */}
+            <div className="lg:col-span-1 space-y-8">
               <div className="glass-card rounded-xl p-6">
                 <h3 className="text-lg font-semibold mb-4">Pricing Details</h3>
                 <div className="space-y-3">
@@ -258,8 +264,8 @@ const InvoiceDetails = () => {
                     <span>₹{Math.round(Number(invoice.amount) * 0.1)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Weight Charges</span>
-                    <span>₹{invoice.weight ? Math.round(Number(invoice.weight) * 50) : 0}</span>
+                    <span className="text-muted-foreground">Weight Charges (150/kg)</span>
+                    <span>₹{invoice.weight ? Math.round(Number(invoice.weight) * 150) : 0}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Handling Fee</span>
@@ -274,25 +280,36 @@ const InvoiceDetails = () => {
                     <span>₹150</span>
                   </div>
                   <div className="flex justify-between">
+                    <span className="text-muted-foreground">Docket Charges</span>
+                    <span>₹80</span>
+                  </div>
+                  <div className="flex justify-between">
                     <span className="text-muted-foreground">Tax (18% GST)</span>
-                    <span>₹{Math.round((Number(invoice.amount) * 0.1 + (invoice.weight ? Number(invoice.weight) * 50 : 0) + 450) * 0.18)}</span>
+                    <span>₹{Math.round((Number(invoice.amount) * 0.1 + (invoice.weight ? Number(invoice.weight) * 150 : 0) + 530) * 0.18)}</span>
                   </div>
                   <div className="border-t pt-3 mt-3 flex justify-between font-bold">
                     <span>Total</span>
-                    <span>₹{Math.round((Number(invoice.amount) * 0.1 + (invoice.weight ? Number(invoice.weight) * 50 : 0) + 450) * 1.18)}</span>
+                    <span>₹{Math.round((Number(invoice.amount) * 0.1 + (invoice.weight ? Number(invoice.weight) * 150 : 0) + 530) * 1.18)}</span>
                   </div>
                 </div>
               </div>
               
-              {/* Additional Actions */}
               <div className="glass-card rounded-xl p-6">
                 <h3 className="text-lg font-semibold mb-4">Actions</h3>
                 <div className="space-y-3">
-                  <Button variant="outline" className="w-full justify-start">
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={handlePrintLabel}
+                  >
                     <Printer className="h-4 w-4 mr-2" />
                     Print Shipping Label
                   </Button>
-                  <Button variant="outline" className="w-full justify-start">
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={handleDownloadInvoice}
+                  >
                     <FileText className="h-4 w-4 mr-2" />
                     Download Invoice PDF
                   </Button>
