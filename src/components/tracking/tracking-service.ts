@@ -12,16 +12,16 @@ export const trackShipment = async (
   try {
     console.log("Tracking number:", trackingNumber.trim());
     
-    // First try the edge function as the primary method for public tracking
+    // Use edge function as the primary method for public tracking
     try {
-      console.log("Trying edge function for public tracking");
+      console.log("Using edge function for public tracking");
       const { data: publicTrackingData, error: publicTrackingError } = await supabase.functions.invoke('public-tracking', {
         body: { trackingNumber: trackingNumber.trim() }
       });
       
       if (publicTrackingError) {
         console.error("Error invoking public tracking function:", publicTrackingError);
-        // Don't throw error here, we'll try other methods
+        // Fall through to try other methods if edge function fails
       }
       
       console.log("Public tracking result:", publicTrackingData);
@@ -57,7 +57,7 @@ export const trackShipment = async (
         .from('invoices')
         .select('*')
         .eq('consignment_no', trackingNumber.trim())
-        .single();
+        .maybeSingle();
       
       if (invoiceData && !invoiceError) {
         console.log("Direct database query successful:", invoiceData);
@@ -79,7 +79,6 @@ export const trackShipment = async (
       }
     } catch (error) {
       console.error("Direct database query failed:", error);
-      // Continue to demo fallback
     }
     
     // Use demo tracking as final fallback only for specific demo tracking number

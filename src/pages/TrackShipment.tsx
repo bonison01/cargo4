@@ -20,14 +20,6 @@ const TrackShipment = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [trackingSteps, setTrackingSteps] = useState<TrackingStep[]>([]);
 
-  // Auto-fill demo tracking if no consignment provided
-  useEffect(() => {
-    if (!consignmentParam) {
-      // Use a default demo tracking number
-      setConsignmentNo('MT-202503657');
-    }
-  }, [consignmentParam]);
-
   // Auto-track if consignment number is provided in URL
   useEffect(() => {
     if (consignmentParam) {
