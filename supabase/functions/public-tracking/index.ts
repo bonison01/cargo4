@@ -79,21 +79,26 @@ Deno.serve(async (req) => {
 
     // Fetch invoice data by tracking number
     if (trackingNumber) {
+      // Add logging for debugging
+      console.log("Fetching invoice with consignment number:", trackingNumber)
+      
       const { data: invoice, error: invoiceError } = await supabase
         .from('invoices')
         .select('*')
         .eq('consignment_no', trackingNumber)
-        .limit(1)
-        .single()
+        .maybeSingle()
 
-      if (invoiceError && invoiceError.code !== 'PGRST116') {
+      if (invoiceError) {
         console.error("Error fetching invoice data:", invoiceError)
         return new Response(
-          JSON.stringify({ error: 'Failed to fetch invoice data' }),
+          JSON.stringify({ error: 'Failed to fetch invoice data', details: invoiceError }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
         )
       }
 
+      // Add logging to see what was returned
+      console.log("Invoice data found:", invoice ? "Yes" : "No")
+      
       return new Response(
         JSON.stringify({ invoice: invoice || null }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -107,7 +112,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error("Public tracking error:", error)
     return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
+      JSON.stringify({ error: 'Internal server error', details: error.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     )
   }

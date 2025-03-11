@@ -12,44 +12,16 @@ export const trackShipment = async (
   try {
     console.log("Tracking number:", trackingNumber.trim());
     
-    // First, try to use the regular database query with RLS
-    // This will work for authenticated users or public data
-    const { data: invoiceData, error: invoiceError } = await supabase
-      .from('invoices')
-      .select('*')
-      .eq('consignment_no', trackingNumber.trim())
-      .single();
-    
-    // If the direct query worked, use that data
-    if (invoiceData && !invoiceError) {
-      console.log("Direct database query successful:", invoiceData);
-      const { getEstimatedDelivery, getCurrentLocation, generateTrackingSteps } = await import('./tracking-utils');
-      
-      const trackingResult = {
-        consignmentNo: invoiceData.consignment_no,
-        status: invoiceData.status,
-        origin: invoiceData.from_location,
-        destination: invoiceData.to_location,
-        estimatedDelivery: getEstimatedDelivery(invoiceData.created_at),
-        currentLocation: getCurrentLocation(invoiceData.status, invoiceData.from_location, invoiceData.to_location),
-        id: invoiceData.id,
-      };
-      
-      // Generate tracking steps
-      const steps = generateTrackingSteps(invoiceData);
-      return { trackingResult, trackingSteps: steps };
-    }
-    
-    // If direct query failed, try to use the edge function
+    // First try the edge function as the primary method for public tracking
     try {
-      console.log("Trying edge function as fallback");
+      console.log("Trying edge function for public tracking");
       const { data: publicTrackingData, error: publicTrackingError } = await supabase.functions.invoke('public-tracking', {
         body: { trackingNumber: trackingNumber.trim() }
       });
       
       if (publicTrackingError) {
         console.error("Error invoking public tracking function:", publicTrackingError);
-        throw publicTrackingError;
+        // Don't throw error here, we'll try other methods
       }
       
       console.log("Public tracking result:", publicTrackingData);
@@ -74,10 +46,43 @@ export const trackShipment = async (
         return { trackingResult, trackingSteps: steps };
       }
     } catch (error) {
-      console.error("Edge function fallback failed:", error);
+      console.error("Edge function failed:", error);
+      // Continue to next method
     }
     
-    // Use demo tracking as final fallback for specific demo tracking number
+    // As fallback, try direct database query (for authenticated users)
+    try {
+      console.log("Trying direct database query");
+      const { data: invoiceData, error: invoiceError } = await supabase
+        .from('invoices')
+        .select('*')
+        .eq('consignment_no', trackingNumber.trim())
+        .single();
+      
+      if (invoiceData && !invoiceError) {
+        console.log("Direct database query successful:", invoiceData);
+        const { getEstimatedDelivery, getCurrentLocation, generateTrackingSteps } = await import('./tracking-utils');
+        
+        const trackingResult = {
+          consignmentNo: invoiceData.consignment_no,
+          status: invoiceData.status,
+          origin: invoiceData.from_location,
+          destination: invoiceData.to_location,
+          estimatedDelivery: getEstimatedDelivery(invoiceData.created_at),
+          currentLocation: getCurrentLocation(invoiceData.status, invoiceData.from_location, invoiceData.to_location),
+          id: invoiceData.id,
+        };
+        
+        // Generate tracking steps
+        const steps = generateTrackingSteps(invoiceData);
+        return { trackingResult, trackingSteps: steps };
+      }
+    } catch (error) {
+      console.error("Direct database query failed:", error);
+      // Continue to demo fallback
+    }
+    
+    // Use demo tracking as final fallback only for specific demo tracking number
     if (trackingNumber.trim() === 'MT-202503657') {
       console.log("Using demo tracking data fallback");
       
