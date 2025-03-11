@@ -125,7 +125,7 @@ const Index = () => {
                 viewport={{ once: true }}
                 className="flex flex-wrap justify-center gap-4"
               >
-                <Link to="/register">
+                <Link to="/services">
                   <Button size="lg" className="bg-mateng-600 hover:bg-mateng-700">
                     Get Started
                   </Button>
