@@ -11,14 +11,6 @@ export interface Invoice {
   user_id?: string;
   weight?: number | null;
   items?: string | null;
-  pickup_date?: string | null;
-  origin_city?: string | null;
-  destination_city?: string | null;
-  sender_info?: string | null;
-  receiver_info?: string | null;
-  item_count?: number | null;
-  item_photo?: string | null;
-  item_description?: string | null;
 }
 
 export interface InvoiceFormData {
@@ -33,12 +25,4 @@ export interface InvoiceFormData {
   pickupFee: string;
   deliveryFee: string;
   dimensions: string;
-  pickupDate: string;
-  originCity: string;
-  destinationCity: string;
-  senderInfo: string;
-  receiverInfo: string;
-  itemCount: string;
-  itemPhoto: string;
-  itemDescription: string;
 }
