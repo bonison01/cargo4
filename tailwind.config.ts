@@ -64,16 +64,16 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				mateng: {
-					50: '#f0f9ff',
-					100: '#e0f2fe',
-					200: '#bae6fd',
-					300: '#7dd3fc',
-					400: '#38bdf8',
-					500: '#0ea5e9',
-					600: '#0284c7',
-					700: '#0369a1',
-					800: '#075985',
-					900: '#0c4a6e',
+					50: '#f0f9f0',
+					100: '#dcf0dc',
+					200: '#b9e1b9',
+					300: '#8ecc8e',
+					400: '#5db05d',
+					500: '#3c9a3c',
+					600: '#2e7c2e',
+					700: '#025200', // Brand primary dark green
+					800: '#013700',
+					900: '#012a00',
 				},
 				status: {
 					pending: '#f97316',

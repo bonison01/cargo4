@@ -56,7 +56,7 @@ const TrackShipment = () => {
 
       <Navbar />
       
-      <main className="min-h-screen pt-28 pb-16">
+      <main className="min-h-screen pt-20 pb-16">
         <div className="container px-4 mx-auto">
           <div className="max-w-3xl mx-auto">
             <motion.div
