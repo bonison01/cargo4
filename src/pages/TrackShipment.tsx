@@ -9,9 +9,12 @@ import TrackingForm from '@/components/tracking/tracking-form';
 import TrackingResultDisplay from '@/components/tracking/tracking-result';
 import { TrackingResult } from '@/components/tracking/tracking-utils';
 import { TrackingStep } from '@/components/ui/track-timeline';
+import { trackShipment } from '@/components/tracking/tracking-service';
+import { useToast } from '@/hooks/use-toast';
 
 const TrackShipment = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const consignmentParam = searchParams.get('consignment');
   
@@ -20,14 +23,51 @@ const TrackShipment = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [trackingSteps, setTrackingSteps] = useState<TrackingStep[]>([]);
 
+  // Function to handle tracking
+  const handleTrack = async (trackingNumber: string) => {
+    if (!trackingNumber.trim()) {
+      toast({
+        title: "Tracking number required",
+        description: "Please enter a consignment number to track your shipment.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      const { trackingResult, trackingSteps } = await trackShipment(trackingNumber);
+      
+      setTrackingResult(trackingResult);
+      setTrackingSteps(trackingSteps);
+      
+      // Update URL with consignment number for shareable link
+      if (trackingResult && trackingNumber) {
+        setSearchParams({ consignment: trackingNumber });
+      } else if (!trackingResult) {
+        toast({
+          title: "Shipment not found",
+          description: "No shipment found with the provided tracking number. Please check and try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error tracking shipment:", error);
+      toast({
+        title: "Tracking failed",
+        description: "We encountered an error while tracking your shipment. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Auto-track if consignment number is provided in URL
   useEffect(() => {
     if (consignmentParam) {
       console.log("Auto-tracking with consignment parameter:", consignmentParam);
-      const trackingFormRef = document.getElementById('tracking-form') as HTMLFormElement;
-      if (trackingFormRef) {
-        trackingFormRef.dispatchEvent(new Event('submit', { cancelable: true }));
-      }
+      handleTrack(consignmentParam);
     }
   }, [consignmentParam]);
 
@@ -75,12 +115,14 @@ const TrackShipment = () => {
               setLoading={setIsLoading}
               setConsignmentNo={setConsignmentNo}
               consignmentNo={consignmentNo}
+              onTrack={handleTrack}
             />
             
             <TrackingResultDisplay
               trackingResult={trackingResult}
               trackingSteps={trackingSteps}
               onViewInvoice={viewInvoiceDetails}
+              isLoading={isLoading}
             />
           </div>
         </div>

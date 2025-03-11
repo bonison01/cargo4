@@ -19,6 +19,7 @@ export interface Invoice {
   item_count?: number | null;
   item_photo?: string | null;
   item_description?: string | null;
+  mode?: string | null;
 }
 
 export interface InvoiceFormData {
@@ -41,4 +42,5 @@ export interface InvoiceFormData {
   itemCount: string;
   itemPhoto: string;
   itemDescription: string;
+  mode?: string;
 }

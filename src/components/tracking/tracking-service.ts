@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { TrackingResult } from './tracking-utils';
 import { Invoice } from '@/types/invoice';
+import { getEstimatedDelivery, getCurrentLocation, generateTrackingSteps } from './tracking-utils';
 
 /**
  * Track a shipment by consignment number
@@ -12,11 +13,17 @@ export const trackShipment = async (
   try {
     console.log("Tracking number:", trackingNumber.trim());
     
+    // Validate tracking number
+    const trimmedNumber = trackingNumber.trim();
+    if (!trimmedNumber) {
+      return { trackingResult: null, trackingSteps: [] };
+    }
+    
     // Use edge function as the primary method for public tracking
     try {
       console.log("Using edge function for public tracking");
       const { data: publicTrackingData, error: publicTrackingError } = await supabase.functions.invoke('public-tracking', {
-        body: { trackingNumber: trackingNumber.trim() }
+        body: { trackingNumber: trimmedNumber }
       });
       
       if (publicTrackingError) {
@@ -28,13 +35,12 @@ export const trackShipment = async (
       
       if (publicTrackingData?.invoice) {
         const data = publicTrackingData.invoice;
-        const { getEstimatedDelivery, getCurrentLocation, generateTrackingSteps } = await import('./tracking-utils');
         
         const trackingResult = {
           consignmentNo: data.consignment_no,
           status: data.status,
-          origin: data.from_location,
-          destination: data.to_location,
+          origin: data.origin_city || data.from_location,
+          destination: data.destination_city || data.to_location,
           estimatedDelivery: getEstimatedDelivery(data.created_at),
           currentLocation: getCurrentLocation(data.status, data.from_location, data.to_location),
           id: data.id,
@@ -56,18 +62,17 @@ export const trackShipment = async (
       const { data: invoiceData, error: invoiceError } = await supabase
         .from('invoices')
         .select('*')
-        .eq('consignment_no', trackingNumber.trim())
+        .eq('consignment_no', trimmedNumber)
         .maybeSingle();
       
       if (invoiceData && !invoiceError) {
         console.log("Direct database query successful:", invoiceData);
-        const { getEstimatedDelivery, getCurrentLocation, generateTrackingSteps } = await import('./tracking-utils');
         
         const trackingResult = {
           consignmentNo: invoiceData.consignment_no,
           status: invoiceData.status,
-          origin: invoiceData.from_location,
-          destination: invoiceData.to_location,
+          origin: invoiceData.origin_city || invoiceData.from_location,
+          destination: invoiceData.destination_city || invoiceData.to_location,
           estimatedDelivery: getEstimatedDelivery(invoiceData.created_at),
           currentLocation: getCurrentLocation(invoiceData.status, invoiceData.from_location, invoiceData.to_location),
           id: invoiceData.id,
@@ -82,10 +87,10 @@ export const trackShipment = async (
     }
     
     // Use demo tracking as final fallback only for specific demo tracking number
-    if (trackingNumber.trim() === 'MT-202503657') {
+    if (trimmedNumber === 'MT-202503657') {
       console.log("Using demo tracking data fallback");
       
-      // Create a mock invoice object
+      // Create a mock invoice object with all required fields
       const demoInvoice: Invoice = {
         id: 'demo-id-123456',
         consignment_no: 'MT-202503657',
@@ -101,10 +106,11 @@ export const trackShipment = async (
         sender_info: 'John Doe (+91 9876543210)',
         receiver_info: 'Jane Smith (+91 9876543211)',
         item_count: 2,
-        item_description: 'Laptop and reference books'
+        item_description: 'Laptop and reference books',
+        pickup_date: new Date().toISOString(),
+        item_photo: '',
+        mode: 'road'
       };
-      
-      const { getEstimatedDelivery, getCurrentLocation, generateTrackingSteps } = await import('./tracking-utils');
       
       const trackingResult = {
         consignmentNo: demoInvoice.consignment_no,
