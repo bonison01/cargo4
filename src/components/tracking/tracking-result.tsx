@@ -10,12 +10,14 @@ interface TrackingResultDisplayProps {
   trackingResult: TrackingResult | null;
   trackingSteps: any[];
   onViewInvoice: () => void;
+  isLoading?: boolean;
 }
 
 const TrackingResultDisplay: React.FC<TrackingResultDisplayProps> = ({ 
   trackingResult, 
   trackingSteps,
-  onViewInvoice
+  onViewInvoice,
+  isLoading
 }) => {
   if (!trackingResult) return null;
   

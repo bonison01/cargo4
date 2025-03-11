@@ -10,11 +10,12 @@ import DemoTrackingButton from './demo-tracking-button';
 import { trackShipment } from './tracking-service';
 
 interface TrackingFormProps {
-  initialConsignment?: string;
+  initialConsignment?: string | null;
   onTrackingResult: (result: any, steps: any[]) => void;
   setLoading: (loading: boolean) => void;
   setConsignmentNo: (value: string) => void;
   consignmentNo: string;
+  onTrack: (trackingNumber: string) => Promise<void>;
 }
 
 const TrackingForm: React.FC<TrackingFormProps> = ({

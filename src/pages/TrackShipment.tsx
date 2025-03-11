@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import Navbar from '@/components/ui/navbar/navbar';
@@ -23,7 +22,6 @@ const TrackShipment = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [trackingSteps, setTrackingSteps] = useState<TrackingStep[]>([]);
 
-  // Function to handle tracking
   const handleTrack = async (trackingNumber: string) => {
     if (!trackingNumber.trim()) {
       toast({
@@ -41,7 +39,6 @@ const TrackShipment = () => {
       setTrackingResult(trackingResult);
       setTrackingSteps(trackingSteps);
       
-      // Update URL with consignment number for shareable link
       if (trackingResult && trackingNumber) {
         setSearchParams({ consignment: trackingNumber });
       } else if (!trackingResult) {
@@ -63,7 +60,6 @@ const TrackShipment = () => {
     }
   };
 
-  // Auto-track if consignment number is provided in URL
   useEffect(() => {
     if (consignmentParam) {
       console.log("Auto-tracking with consignment parameter:", consignmentParam);
@@ -75,7 +71,6 @@ const TrackShipment = () => {
     setTrackingResult(result);
     setTrackingSteps(steps);
     
-    // Update URL with consignment number for shareable link
     if (result && consignmentNo) {
       setSearchParams({ consignment: consignmentNo });
     }
