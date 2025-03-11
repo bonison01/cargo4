@@ -9,7 +9,6 @@ import TrackingForm from '@/components/tracking/tracking-form';
 import TrackingResultDisplay from '@/components/tracking/tracking-result';
 import { TrackingResult } from '@/components/tracking/tracking-utils';
 import { TrackingStep } from '@/components/ui/track-timeline';
-import { fetchDemoTrackingNumber } from '@/components/tracking/demo-invoice-utils';
 
 const TrackShipment = () => {
   const navigate = useNavigate();
@@ -21,21 +20,12 @@ const TrackShipment = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [trackingSteps, setTrackingSteps] = useState<TrackingStep[]>([]);
 
-  // Check if we need to create demo data or pre-fill tracking
+  // Auto-fill demo tracking if no consignment provided
   useEffect(() => {
-    const initializeData = async () => {
-      try {
-        // Check if we need a demo consignment
-        if (!consignmentParam) {
-          // Just set the demo tracking number for easy testing
-          setConsignmentNo('MT-202503657');
-        }
-      } catch (error) {
-        console.error("Error initializing data:", error);
-      }
-    };
-    
-    initializeData();
+    if (!consignmentParam) {
+      // Use a default demo tracking number
+      setConsignmentNo('MT-202503657');
+    }
   }, [consignmentParam]);
 
   // Auto-track if consignment number is provided in URL

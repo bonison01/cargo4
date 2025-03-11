@@ -1,15 +1,14 @@
 
 import React from 'react';
-import { fetchDemoTrackingNumber } from './demo-invoice-utils';
 
 interface DemoTrackingButtonProps {
   setConsignmentNo: (value: string) => void;
 }
 
 const DemoTrackingButton: React.FC<DemoTrackingButtonProps> = ({ setConsignmentNo }) => {
-  const handleClick = async () => {
-    const demoNumber = await fetchDemoTrackingNumber();
-    setConsignmentNo(demoNumber);
+  const handleClick = () => {
+    // Use the fixed demo tracking number
+    setConsignmentNo('MT-202503657');
   };
   
   return (
