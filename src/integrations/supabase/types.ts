@@ -13,68 +13,68 @@ export type Database = {
         Row: {
           amount: number
           consignment_no: string
-          created_at: string | null
+          created_at: string
           destination_city: string | null
           from_location: string
           id: string
-          item_count: number | null
+          item_count: number
           item_description: string | null
           item_photo: string | null
-          items: string | null
-          mode: string | null
+          items: string
+          mode: string
           origin_city: string | null
           pickup_date: string | null
           receiver_info: string | null
           sender_info: string | null
           status: string
           to_location: string
-          updated_at: string | null
-          user_id: string | null
-          weight: number | null
+          updated_at: string
+          user_id: string
+          weight: number
         }
         Insert: {
           amount: number
           consignment_no: string
-          created_at?: string | null
+          created_at?: string
           destination_city?: string | null
           from_location: string
           id?: string
-          item_count?: number | null
+          item_count: number
           item_description?: string | null
           item_photo?: string | null
-          items?: string | null
-          mode?: string | null
+          items: string
+          mode?: string
           origin_city?: string | null
           pickup_date?: string | null
           receiver_info?: string | null
           sender_info?: string | null
           status?: string
           to_location: string
-          updated_at?: string | null
-          user_id?: string | null
-          weight?: number | null
+          updated_at?: string
+          user_id: string
+          weight: number
         }
         Update: {
           amount?: number
           consignment_no?: string
-          created_at?: string | null
+          created_at?: string
           destination_city?: string | null
           from_location?: string
           id?: string
-          item_count?: number | null
+          item_count?: number
           item_description?: string | null
           item_photo?: string | null
-          items?: string | null
-          mode?: string | null
+          items?: string
+          mode?: string
           origin_city?: string | null
           pickup_date?: string | null
           receiver_info?: string | null
           sender_info?: string | null
           status?: string
           to_location?: string
-          updated_at?: string | null
-          user_id?: string | null
-          weight?: number | null
+          updated_at?: string
+          user_id?: string
+          weight?: number
         }
         Relationships: []
       }

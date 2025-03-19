@@ -21,26 +21,26 @@ export const generateInvoicePDF = (invoice: Invoice) => {
   doc.text(`To: ${invoice.to_location}`, 20, 90);
   
   // Calculate charges
-  const basePrice = Math.round(Number(invoice.amount) * 0.1);
   const weightCharges = invoice.weight ? Math.round(Number(invoice.weight) * 150) : 0;
+  const docketCharges = 80;
   const handlingFee = 200;
   const pickupCharges = 100;
   const deliveryCharges = 150;
-  const docketCharges = 80;
-  const tax = Math.round((basePrice + weightCharges + handlingFee + pickupCharges + deliveryCharges + docketCharges) * 0.18);
-  const total = basePrice + weightCharges + handlingFee + pickupCharges + deliveryCharges + docketCharges + tax;
+  const subtotal = weightCharges + docketCharges + handlingFee + pickupCharges + deliveryCharges;
+  const tax = Math.round(subtotal * 0.18);
+  const total = subtotal + tax;
   
   // Charges table
   (doc as any).autoTable({
     startY: 100,
     head: [['Description', 'Amount']],
     body: [
-      ['Base Price', `₹${basePrice}`],
       ['Weight Charges (150/kg)', `₹${weightCharges}`],
+      ['Docket Charges', `₹${docketCharges}`],
       ['Handling Fee', `₹${handlingFee}`],
       ['Pickup Charges', `₹${pickupCharges}`],
       ['Delivery Charges', `₹${deliveryCharges}`],
-      ['Docket Charges', `₹${docketCharges}`],
+      ['Subtotal', `₹${subtotal}`],
       ['Tax (18% GST)', `₹${tax}`],
       ['Total', `₹${total}`],
     ],

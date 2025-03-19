@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import Navbar from '@/components/ui/navbar/navbar';
@@ -100,6 +101,11 @@ const InvoiceDetails = () => {
     if (invoice) {
       const doc = generateInvoicePDF(invoice);
       doc.save(`mateng-invoice-${invoice.consignment_no}.pdf`);
+      
+      toast({
+        title: "Invoice Downloaded",
+        description: `Invoice #${invoice.consignment_no} has been downloaded.`,
+      });
     }
   };
 
@@ -107,6 +113,11 @@ const InvoiceDetails = () => {
     if (invoice) {
       const doc = generateShippingLabel(invoice);
       doc.save(`mateng-shipping-label-${invoice.consignment_no}.pdf`);
+      
+      toast({
+        title: "Shipping Label Generated",
+        description: `Shipping label for #${invoice.consignment_no} has been generated.`,
+      });
     }
   };
 
@@ -141,6 +152,16 @@ const InvoiceDetails = () => {
       </PageTransition>
     );
   }
+  
+  // Calculate charges for display
+  const weightCharges = invoice.weight ? Math.round(Number(invoice.weight) * 150) : 0;
+  const docketCharges = 80;
+  const handlingFee = 200;
+  const pickupCharges = 100;
+  const deliveryCharges = 150;
+  const subtotal = weightCharges + docketCharges + handlingFee + pickupCharges + deliveryCharges;
+  const tax = Math.round(subtotal * 0.18);
+  const total = subtotal + tax;
 
   return (
     <PageTransition>
@@ -168,7 +189,7 @@ const InvoiceDetails = () => {
                           ? 'bg-status-cancelled/10 text-status-cancelled'
                           : 'bg-status-pending/10 text-status-pending'
                 }`}>
-                  {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+                  <strong>{invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}</strong>
                 </span>
               </div>
               <p className="text-muted-foreground">Consignment #{invoice.consignment_no}</p>
@@ -260,36 +281,36 @@ const InvoiceDetails = () => {
                 <h3 className="text-lg font-semibold mb-4">Pricing Details</h3>
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Base Price</span>
-                    <span>₹{Math.round(Number(invoice.amount) * 0.1)}</span>
-                  </div>
-                  <div className="flex justify-between">
                     <span className="text-muted-foreground">Weight Charges (150/kg)</span>
-                    <span>₹{invoice.weight ? Math.round(Number(invoice.weight) * 150) : 0}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Handling Fee</span>
-                    <span>₹200</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Pickup Charges</span>
-                    <span>₹100</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Delivery Charges</span>
-                    <span>₹150</span>
+                    <span>₹{weightCharges}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Docket Charges</span>
-                    <span>₹80</span>
+                    <span>₹{docketCharges}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Handling Fee</span>
+                    <span>₹{handlingFee}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Pickup Charges</span>
+                    <span>₹{pickupCharges}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Delivery Charges</span>
+                    <span>₹{deliveryCharges}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Subtotal</span>
+                    <span>₹{subtotal}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Tax (18% GST)</span>
-                    <span>₹{Math.round((Number(invoice.amount) * 0.1 + (invoice.weight ? Number(invoice.weight) * 150 : 0) + 530) * 0.18)}</span>
+                    <span>₹{tax}</span>
                   </div>
                   <div className="border-t pt-3 mt-3 flex justify-between font-bold">
                     <span>Total</span>
-                    <span>₹{Math.round((Number(invoice.amount) * 0.1 + (invoice.weight ? Number(invoice.weight) * 150 : 0) + 530) * 1.18)}</span>
+                    <span>₹{total}</span>
                   </div>
                 </div>
               </div>
