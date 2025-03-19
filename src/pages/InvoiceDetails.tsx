@@ -19,6 +19,15 @@ const InvoiceDetails = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [trackingSteps, setTrackingSteps] = useState<TrackingStep[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [charges, setCharges] = useState({
+    basicFreight: 0,
+    cod: 0,
+    freightHandling: 0,
+    pickupDelivery: 0,
+    packaging: 0,
+    cwbCharge: 0,
+    otherCharges: 0
+  });
   
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -49,6 +58,16 @@ const InvoiceDetails = () => {
         
         if (data) {
           setInvoice(data);
+          
+          // Try to parse charges from item_description if available
+          if (data.item_description && data.item_description.includes('charges:')) {
+            try {
+              const chargesStr = data.item_description.split('charges:')[1].trim();
+              setCharges(JSON.parse(chargesStr));
+            } catch (e) {
+              console.log('Error parsing charges from item_description:', e);
+            }
+          }
           
           const steps: TrackingStep[] = [];
           const statuses = ['pending', 'processing', 'in-transit', 'delivered'];
@@ -121,6 +140,13 @@ const InvoiceDetails = () => {
     }
   };
 
+  // Calculate subtotal and tax based on charges
+  const subtotal = charges.basicFreight + charges.cod + charges.freightHandling + 
+                  charges.pickupDelivery + charges.packaging + charges.cwbCharge + 
+                  charges.otherCharges;
+  const tax = Math.round(subtotal * 0.18);
+  const total = subtotal + tax;
+
   if (isLoading) {
     return (
       <PageTransition>
@@ -152,16 +178,6 @@ const InvoiceDetails = () => {
       </PageTransition>
     );
   }
-  
-  // Calculate charges for display
-  const weightCharges = invoice.weight ? Math.round(Number(invoice.weight) * 150) : 0;
-  const docketCharges = 80;
-  const handlingFee = 200;
-  const pickupCharges = 100;
-  const deliveryCharges = 150;
-  const subtotal = weightCharges + docketCharges + handlingFee + pickupCharges + deliveryCharges;
-  const tax = Math.round(subtotal * 0.18);
-  const total = subtotal + tax;
 
   return (
     <PageTransition>
@@ -280,26 +296,48 @@ const InvoiceDetails = () => {
               <div className="glass-card rounded-xl p-6">
                 <h3 className="text-lg font-semibold mb-4">Pricing Details</h3>
                 <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Weight Charges (150/kg)</span>
-                    <span>₹{weightCharges}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Docket Charges</span>
-                    <span>₹{docketCharges}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Handling Fee</span>
-                    <span>₹{handlingFee}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Pickup Charges</span>
-                    <span>₹{pickupCharges}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Delivery Charges</span>
-                    <span>₹{deliveryCharges}</span>
-                  </div>
+                  {charges.basicFreight > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Basic Freight</span>
+                      <span>₹{charges.basicFreight}</span>
+                    </div>
+                  )}
+                  {charges.cod > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">COD</span>
+                      <span>₹{charges.cod}</span>
+                    </div>
+                  )}
+                  {charges.freightHandling > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Freight Handling</span>
+                      <span>₹{charges.freightHandling}</span>
+                    </div>
+                  )}
+                  {charges.pickupDelivery > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Pickup & Delivery</span>
+                      <span>₹{charges.pickupDelivery}</span>
+                    </div>
+                  )}
+                  {charges.packaging > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Packaging</span>
+                      <span>₹{charges.packaging}</span>
+                    </div>
+                  )}
+                  {charges.cwbCharge > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">CWB Charge</span>
+                      <span>₹{charges.cwbCharge}</span>
+                    </div>
+                  )}
+                  {charges.otherCharges > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Other Charges</span>
+                      <span>₹{charges.otherCharges}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Subtotal</span>
                     <span>₹{subtotal}</span>

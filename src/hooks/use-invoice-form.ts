@@ -33,6 +33,15 @@ export const useInvoiceForm = (invoiceId?: string) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [charges, setCharges] = useState({
+    basicFreight: 0,
+    cod: 0,
+    freightHandling: 0,
+    pickupDelivery: 0,
+    packaging: 0,
+    cwbCharge: 0,
+    otherCharges: 0
+  });
 
   // Fetch invoice data if editing
   useEffect(() => {
@@ -52,6 +61,17 @@ export const useInvoiceForm = (invoiceId?: string) => {
         
         if (data) {
           const invoice = data as Invoice;
+          
+          // Try to parse charges from item_description if available
+          if (invoice.item_description && invoice.item_description.includes('charges:')) {
+            try {
+              const chargesStr = invoice.item_description.split('charges:')[1].trim();
+              setCharges(JSON.parse(chargesStr));
+            } catch (e) {
+              console.log('Error parsing charges from item_description:', e);
+            }
+          }
+          
           setInvoiceData({
             consignmentNo: invoice.consignment_no || '',
             from: invoice.from_location || '',
@@ -71,7 +91,7 @@ export const useInvoiceForm = (invoiceId?: string) => {
             receiverInfo: invoice.receiver_info || '',
             itemCount: invoice.item_count?.toString() || '1',
             itemPhoto: invoice.item_photo || '',
-            itemDescription: invoice.item_description || '',
+            itemDescription: invoice.item_description?.split('charges:')[0].replace('Items: ', '') || '',
           });
         }
       } catch (error: any) {
@@ -93,9 +113,28 @@ export const useInvoiceForm = (invoiceId?: string) => {
     const { name, value } = e.target;
     setInvoiceData(prev => ({ ...prev, [name]: value }));
   };
+  
+  const handleChargeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setCharges(prev => ({ ...prev, [name]: parseFloat(value) || 0 }));
+  };
 
   const handleStatusChange = (value: string) => {
     setInvoiceData(prev => ({ ...prev, status: value }));
+  };
+
+  const calculateSubtotal = () => {
+    return charges.basicFreight + charges.cod + charges.freightHandling + 
+           charges.pickupDelivery + charges.packaging + charges.cwbCharge + 
+           charges.otherCharges;
+  };
+  
+  const calculateTax = () => {
+    return calculateSubtotal() * 0.18;
+  };
+  
+  const calculateTotal = () => {
+    return calculateSubtotal() + calculateTax();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -137,6 +176,12 @@ export const useInvoiceForm = (invoiceId?: string) => {
         consignmentNo = `MT-${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${randomNum}`;
       }
       
+      // Calculate total from charges
+      const totalAmount = calculateTotal();
+      
+      // Store charges data in item_description
+      const itemDescription = `Items: ${invoiceData.itemDescription}; charges: ${JSON.stringify(charges)}`;
+      
       // Update or create invoice
       let result;
       if (invoiceId) {
@@ -147,7 +192,7 @@ export const useInvoiceForm = (invoiceId?: string) => {
             consignment_no: consignmentNo,
             from_location: invoiceData.from,
             to_location: invoiceData.to,
-            amount: parseFloat(invoiceData.amount) || 0,
+            amount: totalAmount,
             items: invoiceData.items,
             weight: parseFloat(invoiceData.weight) || null,
             status: invoiceData.status,
@@ -158,7 +203,7 @@ export const useInvoiceForm = (invoiceId?: string) => {
             receiver_info: invoiceData.receiverInfo,
             item_count: parseInt(invoiceData.itemCount) || 1,
             item_photo: invoiceData.itemPhoto,
-            item_description: invoiceData.itemDescription,
+            item_description: itemDescription,
             // Don't update user_id when editing
           })
           .eq('id', invoiceId)
@@ -171,7 +216,7 @@ export const useInvoiceForm = (invoiceId?: string) => {
             consignment_no: consignmentNo,
             from_location: invoiceData.from,
             to_location: invoiceData.to,
-            amount: 0, // For new invoices, amount is set to 0 and will be updated by admin
+            amount: totalAmount,
             items: invoiceData.items,
             weight: parseFloat(invoiceData.weight) || null,
             status: 'pending', // Always set to pending for new invoices
@@ -183,7 +228,7 @@ export const useInvoiceForm = (invoiceId?: string) => {
             receiver_info: invoiceData.receiverInfo,
             item_count: parseInt(invoiceData.itemCount) || 1,
             item_photo: invoiceData.itemPhoto,
-            item_description: invoiceData.itemDescription,
+            item_description: itemDescription,
           })
           .select();
       }
@@ -214,10 +259,15 @@ export const useInvoiceForm = (invoiceId?: string) => {
 
   return {
     invoiceData,
+    charges,
     isLoading,
     isSubmitting,
     handleChange,
+    handleChargeChange,
     handleStatusChange,
+    calculateSubtotal,
+    calculateTax,
+    calculateTotal,
     handleSubmit
   };
 };

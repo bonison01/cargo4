@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import Navbar from '@/components/ui/navbar/navbar';
@@ -152,6 +151,9 @@ const CreateInvoice = () => {
       
       // Calculate total amount
       const totalAmount = calculateTotal();
+
+      // Store charges data in item_description for later use
+      const itemDescription = `Items: ${itemsDescription}; charges: ${JSON.stringify(charges)}`;
       
       // Save to Supabase
       const { data, error } = await supabase
@@ -167,7 +169,8 @@ const CreateInvoice = () => {
           user_id: session.user.id,
           sender_info: senderInfo,
           receiver_info: receiverInfo,
-          item_count: items.reduce((sum, item) => sum + Number(item.quantity), 0)
+          item_count: items.reduce((sum, item) => sum + Number(item.quantity), 0),
+          item_description: itemDescription
         })
         .select();
       

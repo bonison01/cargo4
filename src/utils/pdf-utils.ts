@@ -20,13 +20,30 @@ export const generateInvoicePDF = (invoice: Invoice) => {
   doc.text(`From: ${invoice.from_location}`, 20, 80);
   doc.text(`To: ${invoice.to_location}`, 20, 90);
   
-  // Calculate charges
-  const weightCharges = invoice.weight ? Math.round(Number(invoice.weight) * 150) : 0;
-  const docketCharges = 80;
-  const handlingFee = 200;
-  const pickupCharges = 100;
-  const deliveryCharges = 150;
-  const subtotal = weightCharges + docketCharges + handlingFee + pickupCharges + deliveryCharges;
+  // Parse charges from invoice.item_description if it exists and contains charge data
+  let charges = {
+    basicFreight: 0,
+    cod: 0,
+    freightHandling: 0,
+    pickupDelivery: 0,
+    packaging: 0,
+    cwbCharge: 0,
+    otherCharges: 0
+  };
+  
+  // Try to parse charges from item_description if available
+  if (invoice.item_description && invoice.item_description.includes('charges:')) {
+    try {
+      const chargesStr = invoice.item_description.split('charges:')[1].trim();
+      charges = JSON.parse(chargesStr);
+    } catch (e) {
+      console.log('Error parsing charges from item_description:', e);
+    }
+  }
+  
+  const subtotal = charges.basicFreight + charges.cod + charges.freightHandling + 
+                   charges.pickupDelivery + charges.packaging + charges.cwbCharge + 
+                   charges.otherCharges;
   const tax = Math.round(subtotal * 0.18);
   const total = subtotal + tax;
   
@@ -35,11 +52,13 @@ export const generateInvoicePDF = (invoice: Invoice) => {
     startY: 100,
     head: [['Description', 'Amount']],
     body: [
-      ['Weight Charges (150/kg)', `₹${weightCharges}`],
-      ['Docket Charges', `₹${docketCharges}`],
-      ['Handling Fee', `₹${handlingFee}`],
-      ['Pickup Charges', `₹${pickupCharges}`],
-      ['Delivery Charges', `₹${deliveryCharges}`],
+      ['Basic Freight', `₹${charges.basicFreight}`],
+      ['COD', `₹${charges.cod}`],
+      ['Freight Handling', `₹${charges.freightHandling}`],
+      ['Pickup & Delivery', `₹${charges.pickupDelivery}`],
+      ['Packaging', `₹${charges.packaging}`],
+      ['CWB Charge', `₹${charges.cwbCharge}`],
+      ['Other Charges', `₹${charges.otherCharges}`],
       ['Subtotal', `₹${subtotal}`],
       ['Tax (18% GST)', `₹${tax}`],
       ['Total', `₹${total}`],

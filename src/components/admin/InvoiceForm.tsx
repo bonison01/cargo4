@@ -10,18 +10,44 @@ import { Textarea } from "@/components/ui/textarea";
 
 interface InvoiceFormProps {
   invoiceData: InvoiceFormData;
+  charges?: {
+    basicFreight: number;
+    cod: number;
+    freightHandling: number;
+    pickupDelivery: number;
+    packaging: number;
+    cwbCharge: number;
+    otherCharges: number;
+  };
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  handleChargeChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleStatusChange: (value: string) => void;
   handleSubmit: (e: React.FormEvent) => void;
+  calculateSubtotal?: () => number;
+  calculateTax?: () => number;
+  calculateTotal?: () => number;
   isSubmitting: boolean;
   isEditing: boolean;
 }
 
 const InvoiceForm: React.FC<InvoiceFormProps> = ({ 
   invoiceData, 
+  charges = {
+    basicFreight: 0,
+    cod: 0,
+    freightHandling: 0,
+    pickupDelivery: 0,
+    packaging: 0,
+    cwbCharge: 0,
+    otherCharges: 0
+  },
   handleChange, 
+  handleChargeChange = () => {},
   handleStatusChange, 
-  handleSubmit, 
+  handleSubmit,
+  calculateSubtotal = () => 0,
+  calculateTax = () => 0,
+  calculateTotal = () => 0,
   isSubmitting,
   isEditing
 }) => {
@@ -196,48 +222,116 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
           <h3 className="text-lg font-medium mb-4">Charges & Status</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <div className="space-y-2">
-              <Label htmlFor="handlingFee">Handling Fee (₹)</Label>
+              <Label htmlFor="basicFreight">Basic Freight (₹)</Label>
               <Input
-                id="handlingFee"
-                name="handlingFee"
-                placeholder="e.g., 200"
-                value={invoiceData.handlingFee}
-                onChange={handleChange}
+                id="basicFreight"
+                name="basicFreight"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                value={charges.basicFreight || ''}
+                onChange={handleChargeChange}
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="pickupFee">Pickup Fee (₹)</Label>
+              <Label htmlFor="cod">COD (₹)</Label>
               <Input
-                id="pickupFee"
-                name="pickupFee"
-                placeholder="e.g., 100"
-                value={invoiceData.pickupFee}
-                onChange={handleChange}
+                id="cod"
+                name="cod"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                value={charges.cod || ''}
+                onChange={handleChargeChange}
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="deliveryFee">Delivery Fee (₹)</Label>
+              <Label htmlFor="freightHandling">Freight Handling (₹)</Label>
               <Input
-                id="deliveryFee"
-                name="deliveryFee"
-                placeholder="e.g., 150"
-                value={invoiceData.deliveryFee}
-                onChange={handleChange}
+                id="freightHandling"
+                name="freightHandling"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                value={charges.freightHandling || ''}
+                onChange={handleChargeChange}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="pickupDelivery">Pickup & Delivery (₹)</Label>
+              <Input
+                id="pickupDelivery"
+                name="pickupDelivery"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                value={charges.pickupDelivery || ''}
+                onChange={handleChargeChange}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="packaging">Packaging (₹)</Label>
+              <Input
+                id="packaging"
+                name="packaging"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                value={charges.packaging || ''}
+                onChange={handleChargeChange}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="cwbCharge">CWB Charge (₹)</Label>
+              <Input
+                id="cwbCharge"
+                name="cwbCharge"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                value={charges.cwbCharge || ''}
+                onChange={handleChargeChange}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="otherCharges">Other Charges (₹)</Label>
+              <Input
+                id="otherCharges"
+                name="otherCharges"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                value={charges.otherCharges || ''}
+                onChange={handleChargeChange}
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="amount">Total Amount (₹)</Label>
-              <Input
-                id="amount"
-                name="amount"
-                type="text"
-                placeholder="e.g., 2500"
-                value={invoiceData.amount}
-                onChange={handleChange}
-              />
+            <div className="md:col-span-3 border-t pt-4 mt-2">
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-muted-foreground">Subtotal:</span>
+                <span>₹{calculateSubtotal().toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-muted-foreground">Tax (18% GST):</span>
+                <span>₹{calculateTax().toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center font-bold">
+                <span>Total:</span>
+                <span>₹{calculateTotal().toFixed(2)}</span>
+              </div>
             </div>
             
             <div className="space-y-2">
