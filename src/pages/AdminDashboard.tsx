@@ -14,7 +14,13 @@ import AccessDenied from '@/components/admin/AccessDenied';
 
 const AdminDashboard = () => {
   const { isAdmin, isLoading: isAdminLoading } = useAdminCheck();
-  const { searchTerm, setSearchTerm, filteredInvoices, isLoading: isInvoicesLoading } = useInvoiceSearch(isAdmin);
+  const { 
+    searchTerm, 
+    setSearchTerm, 
+    filteredInvoices, 
+    isLoading: isInvoicesLoading,
+    refreshInvoices
+  } = useInvoiceSearch(isAdmin);
   
   const isLoading = isAdminLoading || (isAdmin && isInvoicesLoading);
 
@@ -62,7 +68,8 @@ const AdminDashboard = () => {
               <h2 className="text-xl font-semibold mb-4">All Invoices</h2>
               <InvoiceTable 
                 invoices={filteredInvoices} 
-                isLoading={isInvoicesLoading} 
+                isLoading={isInvoicesLoading}
+                onInvoiceDeleted={refreshInvoices}
               />
             </div>
           )}
