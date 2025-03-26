@@ -1,4 +1,3 @@
-
 import { Invoice } from "@/types/invoice";
 import jsPDF from "jspdf";
 // Import jspdf-autotable correctly
@@ -66,11 +65,9 @@ export const generateInvoicePDF = (invoice: Invoice) => {
     }
   }
   
-  const subtotal = charges.basicFreight + charges.cod + charges.freightHandling + 
+  const total = charges.basicFreight + charges.cod + charges.freightHandling + 
                    charges.pickupDelivery + charges.packaging + charges.cwbCharge + 
                    charges.otherCharges;
-  const tax = Math.round(subtotal * 0.18);
-  const total = subtotal + tax;
   
   // Create tables manually instead of using autoTable
   // Shipment details
@@ -121,16 +118,7 @@ export const generateInvoicePDF = (invoice: Invoice) => {
     yPosition += 10;
   }
   
-  // Add subtotal, tax and total
-  doc.text('Subtotal', 20, yPosition);
-  doc.text(subtotal.toString(), 100, yPosition);
-  yPosition += 10;
-  
-  doc.text('Tax (18% GST)', 20, yPosition);
-  doc.text(tax.toString(), 100, yPosition);
-  yPosition += 10;
-  
-  // Bold for total - using the correct methods for jsPDF v3
+  // Add total (no subtotal or tax anymore)
   doc.setFont("helvetica", "bold");
   doc.text('Total', 20, yPosition);
   doc.text(total.toString(), 100, yPosition);

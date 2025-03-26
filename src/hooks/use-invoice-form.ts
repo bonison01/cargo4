@@ -25,6 +25,7 @@ const defaultInvoiceData: InvoiceFormData = {
   itemCount: '1',
   itemPhoto: '',
   itemDescription: '',
+  mode: 'road', // Default to road transport
 };
 
 export const useInvoiceForm = (invoiceId?: string) => {
@@ -92,6 +93,7 @@ export const useInvoiceForm = (invoiceId?: string) => {
             itemCount: invoice.item_count?.toString() || '1',
             itemPhoto: invoice.item_photo || '',
             itemDescription: invoice.item_description?.split('charges:')[0].replace('Items: ', '') || '',
+            mode: invoice.mode || 'road',
           });
         }
       } catch (error: any) {
@@ -122,6 +124,10 @@ export const useInvoiceForm = (invoiceId?: string) => {
   const handleStatusChange = (value: string) => {
     setInvoiceData(prev => ({ ...prev, status: value }));
   };
+  
+  const handleModeChange = (value: string) => {
+    setInvoiceData(prev => ({ ...prev, mode: value }));
+  };
 
   const calculateSubtotal = () => {
     return charges.basicFreight + charges.cod + charges.freightHandling + 
@@ -129,12 +135,8 @@ export const useInvoiceForm = (invoiceId?: string) => {
            charges.otherCharges;
   };
   
-  const calculateTax = () => {
-    return calculateSubtotal() * 0.18;
-  };
-  
   const calculateTotal = () => {
-    return calculateSubtotal() + calculateTax();
+    return calculateSubtotal();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -204,6 +206,7 @@ export const useInvoiceForm = (invoiceId?: string) => {
             item_count: parseInt(invoiceData.itemCount) || 1,
             item_photo: invoiceData.itemPhoto,
             item_description: itemDescription,
+            mode: invoiceData.mode || 'road',
             // Don't update user_id when editing
           })
           .eq('id', invoiceId)
@@ -229,6 +232,7 @@ export const useInvoiceForm = (invoiceId?: string) => {
             item_count: parseInt(invoiceData.itemCount) || 1,
             item_photo: invoiceData.itemPhoto,
             item_description: itemDescription,
+            mode: invoiceData.mode || 'road',
           })
           .select();
       }
@@ -265,8 +269,8 @@ export const useInvoiceForm = (invoiceId?: string) => {
     handleChange,
     handleChargeChange,
     handleStatusChange,
+    handleModeChange,
     calculateSubtotal,
-    calculateTax,
     calculateTotal,
     handleSubmit
   };

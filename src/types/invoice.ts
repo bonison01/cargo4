@@ -42,5 +42,5 @@ export interface InvoiceFormData {
   itemCount: string;
   itemPhoto: string;
   itemDescription: string;
-  mode?: string;
+  mode: string;
 }

@@ -16,11 +16,9 @@ interface PricingDetailsProps {
 }
 
 const PricingDetails: React.FC<PricingDetailsProps> = ({ charges }) => {
-  const subtotal = charges.basicFreight + charges.cod + charges.freightHandling + 
-                   charges.pickupDelivery + charges.packaging + charges.cwbCharge + 
-                   charges.otherCharges;
-  const tax = Math.round(subtotal * 0.18);
-  const total = subtotal + tax;
+  const total = charges.basicFreight + charges.cod + charges.freightHandling + 
+                charges.pickupDelivery + charges.packaging + charges.cwbCharge + 
+                charges.otherCharges;
 
   return (
     <div className="glass-card rounded-xl p-6">
@@ -68,14 +66,6 @@ const PricingDetails: React.FC<PricingDetailsProps> = ({ charges }) => {
             <span>₹{charges.otherCharges}</span>
           </div>
         )}
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Subtotal</span>
-          <span>₹{subtotal}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Tax (18% GST)</span>
-          <span>₹{tax}</span>
-        </div>
         <div className="border-t pt-3 mt-3 flex justify-between font-bold">
           <span>Total</span>
           <span>₹{total}</span>

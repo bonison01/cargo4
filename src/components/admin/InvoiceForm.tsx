@@ -22,9 +22,9 @@ interface InvoiceFormProps {
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   handleChargeChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleStatusChange: (value: string) => void;
+  handleModeChange?: (value: string) => void;
   handleSubmit: (e: React.FormEvent) => void;
   calculateSubtotal?: () => number;
-  calculateTax?: () => number;
   calculateTotal?: () => number;
   isSubmitting: boolean;
   isEditing: boolean;
@@ -43,10 +43,10 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
   },
   handleChange, 
   handleChargeChange = () => {},
-  handleStatusChange, 
+  handleStatusChange,
+  handleModeChange = () => {},
   handleSubmit,
   calculateSubtotal = () => 0,
-  calculateTax = () => 0,
   calculateTotal = () => 0,
   isSubmitting,
   isEditing
@@ -150,6 +150,19 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
             value={invoiceData.dimensions}
             onChange={handleChange}
           />
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="mode">Shipping Mode</Label>
+          <Select value={invoiceData.mode || 'road'} onValueChange={handleModeChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select mode" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="road">Road</SelectItem>
+              <SelectItem value="air">Air</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -324,10 +337,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                 <span className="text-muted-foreground">Subtotal:</span>
                 <span>₹{calculateSubtotal().toFixed(2)}</span>
               </div>
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-muted-foreground">Tax (18% GST):</span>
-                <span>₹{calculateTax().toFixed(2)}</span>
-              </div>
               <div className="flex justify-between items-center font-bold">
                 <span>Total:</span>
                 <span>₹{calculateTotal().toFixed(2)}</span>
@@ -346,6 +355,19 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                   <SelectItem value="in-transit">In Transit</SelectItem>
                   <SelectItem value="delivered">Delivered</SelectItem>
                   <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="mode">Shipping Mode</Label>
+              <Select value={invoiceData.mode || 'road'} onValueChange={handleModeChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select mode" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="road">Road</SelectItem>
+                  <SelectItem value="air">Air</SelectItem>
                 </SelectContent>
               </Select>
             </div>
