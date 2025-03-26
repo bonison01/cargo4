@@ -1,4 +1,3 @@
-
 import { Invoice } from "@/types/invoice";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
@@ -15,10 +14,24 @@ export const generateInvoicePDF = (invoice: Invoice) => {
   doc.text(`Invoice #${invoice.consignment_no}`, 20, 40);
   doc.text(`Date: ${new Date(invoice.created_at).toLocaleDateString()}`, 20, 50);
   
-  // Shipping details
+  // From/To details with sender and receiver info
+  doc.setFontSize(14);
   doc.text("Shipping Details", 20, 70);
-  doc.text(`From: ${invoice.from_location}`, 20, 80);
-  doc.text(`To: ${invoice.to_location}`, 20, 90);
+  
+  doc.setFontSize(12);
+  // From details
+  doc.text("From:", 20, 85);
+  doc.text(`${invoice.from_location}`, 25, 95);
+  if (invoice.sender_info) {
+    doc.text(`Sender: ${invoice.sender_info}`, 25, 105);
+  }
+
+  // To details
+  doc.text("To:", 120, 85);
+  doc.text(`${invoice.to_location}`, 125, 95);
+  if (invoice.receiver_info) {
+    doc.text(`Receiver: ${invoice.receiver_info}`, 125, 105);
+  }
   
   // Parse charges from invoice.item_description if it exists and contains charge data
   let charges = {
@@ -47,21 +60,36 @@ export const generateInvoicePDF = (invoice: Invoice) => {
   const tax = Math.round(subtotal * 0.18);
   const total = subtotal + tax;
   
-  // Charges table
+  // Shipment details
+  doc.text("Shipment Information", 20, 125);
   (doc as any).autoTable({
-    startY: 100,
-    head: [['Description', 'Amount']],
+    startY: 130,
+    head: [['Description', 'Value']],
     body: [
-      ['Basic Freight', `₹${charges.basicFreight}`],
-      ['COD', `₹${charges.cod}`],
-      ['Freight Handling', `₹${charges.freightHandling}`],
-      ['Pickup & Delivery', `₹${charges.pickupDelivery}`],
-      ['Packaging', `₹${charges.packaging}`],
-      ['CWB Charge', `₹${charges.cwbCharge}`],
-      ['Other Charges', `₹${charges.otherCharges}`],
-      ['Subtotal', `₹${subtotal}`],
-      ['Tax (18% GST)', `₹${tax}`],
-      ['Total', `₹${total}`],
+      ['Weight', `${invoice.weight || 'N/A'} kg`],
+      ['Items', invoice.items || 'N/A'],
+      ['Product Value', `₹${invoice.amount}`],
+      ['Status', invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)],
+      ['Mode', invoice.mode || 'Road']
+    ],
+  });
+  
+  // Charges table
+  doc.text("Pricing Details", 20, (doc as any).lastAutoTable.finalY + 15);
+  (doc as any).autoTable({
+    startY: (doc as any).lastAutoTable.finalY + 20,
+    head: [['Charge Type', 'Amount (₹)']],
+    body: [
+      ...(charges.basicFreight > 0 ? [['Basic Freight', charges.basicFreight]] : []),
+      ...(charges.cod > 0 ? [['COD', charges.cod]] : []),
+      ...(charges.freightHandling > 0 ? [['Freight Handling', charges.freightHandling]] : []),
+      ...(charges.pickupDelivery > 0 ? [['Pickup & Delivery', charges.pickupDelivery]] : []),
+      ...(charges.packaging > 0 ? [['Packaging', charges.packaging]] : []),
+      ...(charges.cwbCharge > 0 ? [['CWB Charge', charges.cwbCharge]] : []),
+      ...(charges.otherCharges > 0 ? [['Other Charges', charges.otherCharges]] : []),
+      ['Subtotal', subtotal],
+      ['Tax (18% GST)', tax],
+      ['Total', total],
     ],
   });
   

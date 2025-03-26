@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Eye, Edit, Trash2, Download } from 'lucide-react';
@@ -41,13 +40,22 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({ invoices, isLoading, onInvo
   }
 
   const handleDownload = (invoice: Invoice) => {
-    const doc = generateInvoicePDF(invoice);
-    doc.save(`mateng-invoice-${invoice.consignment_no}.pdf`);
-    
-    toast({
-      title: "Invoice Downloaded",
-      description: `Invoice #${invoice.consignment_no} has been downloaded.`,
-    });
+    try {
+      const doc = generateInvoicePDF(invoice);
+      doc.save(`mateng-invoice-${invoice.consignment_no}.pdf`);
+      
+      toast({
+        title: "Invoice Downloaded",
+        description: `Invoice #${invoice.consignment_no} has been downloaded.`,
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: "PDF Generation Failed",
+        description: "There was an error creating the invoice PDF. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const confirmDelete = (invoice: Invoice) => {
