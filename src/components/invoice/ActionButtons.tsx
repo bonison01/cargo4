@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Printer, FileText } from 'lucide-react';
+import { Printer, FileText, FilePdf, Download } from 'lucide-react';
 
 interface ActionButtonsProps {
   onPrintLabel: () => void;
@@ -26,7 +26,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({ onPrintLabel, onDownloadI
           className="w-full justify-start"
           onClick={onDownloadInvoice}
         >
-          <FileText className="h-4 w-4 mr-2" />
+          <FilePdf className="h-4 w-4 mr-2" />
           Download Invoice PDF
         </Button>
       </div>
