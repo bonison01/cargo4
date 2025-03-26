@@ -130,11 +130,11 @@ export const generateInvoicePDF = (invoice: Invoice) => {
   doc.text(tax.toString(), 100, yPosition);
   yPosition += 10;
   
-  // Bold for total
-  doc.setFontStyle('bold');
+  // Bold for total - using the correct methods for jsPDF v3
+  doc.setFont("helvetica", "bold");
   doc.text('Total', 20, yPosition);
   doc.text(total.toString(), 100, yPosition);
-  doc.setFontStyle('normal');
+  doc.setFont("helvetica", "normal");
   
   // Footer
   const pageHeight = doc.internal.pageSize.height;
