@@ -1,6 +1,17 @@
+
 import { Invoice } from "@/types/invoice";
 import jsPDF from "jspdf";
-import "jspdf-autotable";
+// Import jspdf-autotable correctly
+import 'jspdf-autotable';
+// Ensure we have the correct type for jsPDF with autoTable
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => any;
+    lastAutoTable: {
+      finalY: number;
+    };
+  }
+}
 
 export const generateInvoicePDF = (invoice: Invoice) => {
   const doc = new jsPDF();
@@ -62,7 +73,7 @@ export const generateInvoicePDF = (invoice: Invoice) => {
   
   // Shipment details
   doc.text("Shipment Information", 20, 125);
-  (doc as any).autoTable({
+  doc.autoTable({
     startY: 130,
     head: [['Description', 'Value']],
     body: [
@@ -75,9 +86,9 @@ export const generateInvoicePDF = (invoice: Invoice) => {
   });
   
   // Charges table
-  doc.text("Pricing Details", 20, (doc as any).lastAutoTable.finalY + 15);
-  (doc as any).autoTable({
-    startY: (doc as any).lastAutoTable.finalY + 20,
+  doc.text("Pricing Details", 20, doc.lastAutoTable.finalY + 15);
+  doc.autoTable({
+    startY: doc.lastAutoTable.finalY + 20,
     head: [['Charge Type', 'Amount (₹)']],
     body: [
       ...(charges.basicFreight > 0 ? [['Basic Freight', charges.basicFreight]] : []),
