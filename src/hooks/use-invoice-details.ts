@@ -47,7 +47,19 @@ export const useInvoiceDetails = (id: string | undefined) => {
       }
       
       if (data) {
-        setInvoice(data);
+        // Ensure status is one of the valid types before setting the invoice
+        const validStatus = ['pending', 'processing', 'in-transit', 'delivered', 'cancelled'] as const;
+        const typedStatus = validStatus.includes(data.status as any) 
+          ? data.status as Invoice['status']
+          : 'pending' as const;
+        
+        // Create a properly typed invoice object
+        const typedInvoice: Invoice = {
+          ...data,
+          status: typedStatus
+        };
+        
+        setInvoice(typedInvoice);
         
         // Try to parse charges from item_description if available
         if (data.item_description && data.item_description.includes('charges:')) {
@@ -60,7 +72,7 @@ export const useInvoiceDetails = (id: string | undefined) => {
         }
         
         // Create tracking steps based on status
-        createTrackingSteps(data);
+        createTrackingSteps(typedInvoice);
       }
     } catch (error: any) {
       console.error('Error fetching invoice details:', error);
