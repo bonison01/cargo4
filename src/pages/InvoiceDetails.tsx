@@ -1,151 +1,29 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Helmet } from 'react-helmet-async';
+import { useParams, Link } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import Navbar from '@/components/ui/navbar/navbar';
 import PageTransition from '@/components/ui/page-transition';
-import { Button } from '@/components/ui/button';
-import { Link, useParams, useNavigate } from 'react-router-dom';
-import { MapPin, Package, ArrowRight, Printer, Clock, Edit, FileText, Loader2 } from 'lucide-react';
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from '@/hooks/use-toast';
-import TrackTimeline, { TrackingStep } from '@/components/ui/track-timeline';
-import { generateInvoicePDF, generateShippingLabel } from "@/utils/pdf-utils";
+import InvoiceHeader from '@/components/invoice/InvoiceHeader';
+import ShipmentInfo from '@/components/invoice/ShipmentInfo';
+import TrackingHistory from '@/components/invoice/TrackingHistory';
+import PricingDetails from '@/components/invoice/PricingDetails';
+import ActionButtons from '@/components/invoice/ActionButtons';
+import { useInvoiceDetails } from '@/hooks/use-invoice-details';
 
 const InvoiceDetails = () => {
   const { id } = useParams<{ id: string }>();
-  const { toast } = useToast();
-  const navigate = useNavigate();
-  const [invoice, setInvoice] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [trackingSteps, setTrackingSteps] = useState<TrackingStep[]>([]);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [charges, setCharges] = useState({
-    basicFreight: 0,
-    cod: 0,
-    freightHandling: 0,
-    pickupDelivery: 0,
-    packaging: 0,
-    cwbCharge: 0,
-    otherCharges: 0
-  });
-  
-  useEffect(() => {
-    const checkAdminStatus = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const userEmail = session.user.email || '';
-        setIsAdmin(userEmail.endsWith('@mateng.com') || userEmail.includes('admin'));
-      }
-    };
-    
-    checkAdminStatus();
-  }, []);
-
-  useEffect(() => {
-    const fetchInvoiceDetails = async () => {
-      try {
-        setIsLoading(true);
-        
-        const { data, error } = await supabase
-          .from('invoices')
-          .select('*')
-          .eq('id', id)
-          .single();
-        
-        if (error) {
-          throw error;
-        }
-        
-        if (data) {
-          setInvoice(data);
-          
-          // Try to parse charges from item_description if available
-          if (data.item_description && data.item_description.includes('charges:')) {
-            try {
-              const chargesStr = data.item_description.split('charges:')[1].trim();
-              setCharges(JSON.parse(chargesStr));
-            } catch (e) {
-              console.log('Error parsing charges from item_description:', e);
-            }
-          }
-          
-          const steps: TrackingStep[] = [];
-          const statuses = ['pending', 'processing', 'in-transit', 'delivered'];
-          const statusLabels = ['Order Placed', 'Processing', 'In Transit', 'Delivered'];
-          const createdDate = new Date(data.created_at);
-          
-          const currentStatusIndex = statuses.indexOf(data.status);
-          
-          for (let i = 0; i < statuses.length; i++) {
-            const isCompleted = i <= currentStatusIndex;
-            const isCurrent = i === currentStatusIndex;
-            
-            const stepDate = new Date(createdDate);
-            stepDate.setDate(createdDate.getDate() + i);
-            
-            steps.push({
-              status: statusLabels[i],
-              location: i === 0 ? data.from_location : 
-                      i === statuses.length - 1 ? data.to_location : 
-                      i === 1 ? 'Sorting Center' : 'Transit Hub',
-              timestamp: isCompleted ? 
-                        stepDate.toLocaleDateString('en-US', {month: 'long', day: 'numeric', year: 'numeric'}) +
-                        ' • ' + stepDate.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'}) :
-                        'Estimated: ' + new Date(createdDate.setDate(createdDate.getDate() + 3)).toLocaleDateString('en-US', {month: 'long', day: 'numeric', year: 'numeric'}),
-              isCompleted,
-              isCurrent
-            });
-          }
-          
-          setTrackingSteps(steps);
-        }
-      } catch (error: any) {
-        console.error('Error fetching invoice details:', error);
-        toast({
-          title: "Error fetching invoice details",
-          description: error.message || "Could not load the invoice. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    if (id) {
-      fetchInvoiceDetails();
-    }
-  }, [id, toast]);
-
-  const handleDownloadInvoice = () => {
-    if (invoice) {
-      const doc = generateInvoicePDF(invoice);
-      doc.save(`mateng-invoice-${invoice.consignment_no}.pdf`);
-      
-      toast({
-        title: "Invoice Downloaded",
-        description: `Invoice #${invoice.consignment_no} has been downloaded.`,
-      });
-    }
-  };
-
-  const handlePrintLabel = () => {
-    if (invoice) {
-      const doc = generateShippingLabel(invoice);
-      doc.save(`mateng-shipping-label-${invoice.consignment_no}.pdf`);
-      
-      toast({
-        title: "Shipping Label Generated",
-        description: `Shipping label for #${invoice.consignment_no} has been generated.`,
-      });
-    }
-  };
-
-  // Calculate subtotal and tax based on charges
-  const subtotal = charges.basicFreight + charges.cod + charges.freightHandling + 
-                  charges.pickupDelivery + charges.packaging + charges.cwbCharge + 
-                  charges.otherCharges;
-  const tax = Math.round(subtotal * 0.18);
-  const total = subtotal + tax;
+  const {
+    invoice,
+    isLoading,
+    isAdmin,
+    charges,
+    trackingSteps,
+    handleDownloadInvoice,
+    handlePrintLabel
+  } = useInvoiceDetails(id);
 
   if (isLoading) {
     return (
@@ -190,190 +68,26 @@ const InvoiceDetails = () => {
       
       <main className="min-h-screen pt-28 pb-16">
         <div className="container px-4 mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <h1 className="text-3xl font-bold">Invoice Details</h1>
-                <span className={`text-sm font-bold px-3 py-1.5 rounded-full ${
-                  invoice.status === 'delivered' 
-                    ? 'bg-status-delivered/10 text-status-delivered' 
-                    : invoice.status === 'in-transit'
-                      ? 'bg-status-transit/10 text-status-transit'
-                      : invoice.status === 'processing'
-                        ? 'bg-status-processing/10 text-status-processing'
-                        : invoice.status === 'cancelled'
-                          ? 'bg-status-cancelled/10 text-status-cancelled'
-                          : 'bg-status-pending/10 text-status-pending'
-                }`}>
-                  <strong>{invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}</strong>
-                </span>
-              </div>
-              <p className="text-muted-foreground">Consignment #{invoice.consignment_no}</p>
-            </div>
-            <div className="flex gap-3">
-              {isAdmin && (
-                <Link to={`/admin/invoices/edit/${invoice.id}`}>
-                  <Button variant="outline" className="flex items-center gap-2">
-                    <Edit className="h-4 w-4" />
-                    Edit Invoice
-                  </Button>
-                </Link>
-              )}
-              <Button variant="outline" className="flex items-center gap-2" onClick={handlePrintLabel}>
-                <Printer className="h-4 w-4" />
-                Print Shipping Label
-              </Button>
-            </div>
-          </div>
+          <InvoiceHeader 
+            consignmentNo={invoice.consignment_no}
+            status={invoice.status}
+            isAdmin={isAdmin}
+            invoiceId={invoice.id}
+            onPrintLabel={handlePrintLabel}
+          />
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-8">
-              <div className="glass-card rounded-xl p-6">
-                <div className="flex items-center gap-2 mb-6">
-                  <Package className="h-5 w-5 text-mateng-600" />
-                  <h2 className="text-xl font-semibold">Shipment Information</h2>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">From</p>
-                    <div className="flex items-center">
-                      <MapPin className="h-5 w-5 text-mateng-600 mr-2" />
-                      <p className="font-medium">{invoice.from_location}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">To</p>
-                    <div className="flex items-center">
-                      <MapPin className="h-5 w-5 text-mateng-600 mr-2" />
-                      <p className="font-medium">{invoice.to_location}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Created On</p>
-                    <div className="flex items-center">
-                      <Clock className="h-5 w-5 text-mateng-600 mr-2" />
-                      <p className="font-medium">{new Date(invoice.created_at).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Product Value</p>
-                    <div className="flex items-center">
-                      <FileText className="h-5 w-5 text-mateng-600 mr-2" />
-                      <p className="font-medium">₹{invoice.amount}</p>
-                    </div>
-                  </div>
-                  {invoice.weight && (
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Weight</p>
-                      <p className="font-medium">{invoice.weight} kg</p>
-                    </div>
-                  )}
-                  {invoice.items && (
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Items</p>
-                      <p className="font-medium">{invoice.items}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              <div className="glass-card rounded-xl p-6">
-                <div className="flex items-center gap-2 mb-6">
-                  <Clock className="h-5 w-5 text-mateng-600" />
-                  <h2 className="text-xl font-semibold">Tracking History</h2>
-                </div>
-                
-                <TrackTimeline steps={trackingSteps} />
-              </div>
+              <ShipmentInfo invoice={invoice} />
+              <TrackingHistory steps={trackingSteps} />
             </div>
             
             <div className="lg:col-span-1 space-y-8">
-              <div className="glass-card rounded-xl p-6">
-                <h3 className="text-lg font-semibold mb-4">Pricing Details</h3>
-                <div className="space-y-3">
-                  {charges.basicFreight > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Basic Freight</span>
-                      <span>₹{charges.basicFreight}</span>
-                    </div>
-                  )}
-                  {charges.cod > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">COD</span>
-                      <span>₹{charges.cod}</span>
-                    </div>
-                  )}
-                  {charges.freightHandling > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Freight Handling</span>
-                      <span>₹{charges.freightHandling}</span>
-                    </div>
-                  )}
-                  {charges.pickupDelivery > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Pickup & Delivery</span>
-                      <span>₹{charges.pickupDelivery}</span>
-                    </div>
-                  )}
-                  {charges.packaging > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Packaging</span>
-                      <span>₹{charges.packaging}</span>
-                    </div>
-                  )}
-                  {charges.cwbCharge > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">CWB Charge</span>
-                      <span>₹{charges.cwbCharge}</span>
-                    </div>
-                  )}
-                  {charges.otherCharges > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Other Charges</span>
-                      <span>₹{charges.otherCharges}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Subtotal</span>
-                    <span>₹{subtotal}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Tax (18% GST)</span>
-                    <span>₹{tax}</span>
-                  </div>
-                  <div className="border-t pt-3 mt-3 flex justify-between font-bold">
-                    <span>Total</span>
-                    <span>₹{total}</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="glass-card rounded-xl p-6">
-                <h3 className="text-lg font-semibold mb-4">Actions</h3>
-                <div className="space-y-3">
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-start"
-                    onClick={handlePrintLabel}
-                  >
-                    <Printer className="h-4 w-4 mr-2" />
-                    Print Shipping Label
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-start"
-                    onClick={handleDownloadInvoice}
-                  >
-                    <FileText className="h-4 w-4 mr-2" />
-                    Download Invoice PDF
-                  </Button>
-                </div>
-              </div>
+              <PricingDetails charges={charges} />
+              <ActionButtons 
+                onPrintLabel={handlePrintLabel}
+                onDownloadInvoice={handleDownloadInvoice}
+              />
             </div>
           </div>
         </div>
