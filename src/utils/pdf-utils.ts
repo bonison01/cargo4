@@ -14,6 +14,7 @@ declare module 'jspdf' {
 }
 
 export const generateInvoicePDF = (invoice: Invoice) => {
+  // Create jsPDF instance
   const doc = new jsPDF();
   
   // Add logo and header
@@ -71,38 +72,69 @@ export const generateInvoicePDF = (invoice: Invoice) => {
   const tax = Math.round(subtotal * 0.18);
   const total = subtotal + tax;
   
+  // Create tables manually instead of using autoTable
   // Shipment details
   doc.text("Shipment Information", 20, 125);
-  doc.autoTable({
-    startY: 130,
-    head: [['Description', 'Value']],
-    body: [
-      ['Weight', `${invoice.weight || 'N/A'} kg`],
-      ['Items', invoice.items || 'N/A'],
-      ['Product Value', `₹${invoice.amount}`],
-      ['Status', invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)],
-      ['Mode', invoice.mode || 'Road']
-    ],
-  });
   
-  // Charges table
-  doc.text("Pricing Details", 20, doc.lastAutoTable.finalY + 15);
-  doc.autoTable({
-    startY: doc.lastAutoTable.finalY + 20,
-    head: [['Charge Type', 'Amount (₹)']],
-    body: [
-      ...(charges.basicFreight > 0 ? [['Basic Freight', charges.basicFreight]] : []),
-      ...(charges.cod > 0 ? [['COD', charges.cod]] : []),
-      ...(charges.freightHandling > 0 ? [['Freight Handling', charges.freightHandling]] : []),
-      ...(charges.pickupDelivery > 0 ? [['Pickup & Delivery', charges.pickupDelivery]] : []),
-      ...(charges.packaging > 0 ? [['Packaging', charges.packaging]] : []),
-      ...(charges.cwbCharge > 0 ? [['CWB Charge', charges.cwbCharge]] : []),
-      ...(charges.otherCharges > 0 ? [['Other Charges', charges.otherCharges]] : []),
-      ['Subtotal', subtotal],
-      ['Tax (18% GST)', tax],
-      ['Total', total],
-    ],
-  });
+  // Create manual table for shipment info
+  const shipmentData = [
+    ['Weight', `${invoice.weight || 'N/A'} kg`],
+    ['Items', invoice.items || 'N/A'],
+    ['Product Value', `₹${invoice.amount}`],
+    ['Status', invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)],
+    ['Mode', invoice.mode || 'Road']
+  ];
+  
+  let yPosition = 135;
+  doc.text('Description', 20, yPosition);
+  doc.text('Value', 100, yPosition);
+  yPosition += 10;
+  
+  for (const row of shipmentData) {
+    doc.text(row[0], 20, yPosition);
+    doc.text(row[1], 100, yPosition);
+    yPosition += 10;
+  }
+  
+  // Pricing details table
+  doc.text("Pricing Details", 20, yPosition + 10);
+  yPosition += 25;
+  
+  doc.text('Charge Type', 20, yPosition);
+  doc.text('Amount (₹)', 100, yPosition);
+  yPosition += 10;
+  
+  // Create charges rows
+  const chargesData = [];
+  if (charges.basicFreight > 0) chargesData.push(['Basic Freight', charges.basicFreight.toString()]);
+  if (charges.cod > 0) chargesData.push(['COD', charges.cod.toString()]);
+  if (charges.freightHandling > 0) chargesData.push(['Freight Handling', charges.freightHandling.toString()]);
+  if (charges.pickupDelivery > 0) chargesData.push(['Pickup & Delivery', charges.pickupDelivery.toString()]);
+  if (charges.packaging > 0) chargesData.push(['Packaging', charges.packaging.toString()]);
+  if (charges.cwbCharge > 0) chargesData.push(['CWB Charge', charges.cwbCharge.toString()]);
+  if (charges.otherCharges > 0) chargesData.push(['Other Charges', charges.otherCharges.toString()]);
+  
+  // Add the charge rows
+  for (const row of chargesData) {
+    doc.text(row[0], 20, yPosition);
+    doc.text(row[1], 100, yPosition);
+    yPosition += 10;
+  }
+  
+  // Add subtotal, tax and total
+  doc.text('Subtotal', 20, yPosition);
+  doc.text(subtotal.toString(), 100, yPosition);
+  yPosition += 10;
+  
+  doc.text('Tax (18% GST)', 20, yPosition);
+  doc.text(tax.toString(), 100, yPosition);
+  yPosition += 10;
+  
+  // Bold for total
+  doc.setFontStyle('bold');
+  doc.text('Total', 20, yPosition);
+  doc.text(total.toString(), 100, yPosition);
+  doc.setFontStyle('normal');
   
   // Footer
   const pageHeight = doc.internal.pageSize.height;
