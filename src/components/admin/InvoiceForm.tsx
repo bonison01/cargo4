@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useNavigate } from 'react-router-dom';
 import { InvoiceFormData } from '@/types/invoice';
 import { Textarea } from "@/components/ui/textarea";
+import PricingDetails from '@/components/invoice/PricingDetails';
 
 interface InvoiceFormProps {
   invoiceData: InvoiceFormData;
@@ -233,116 +233,16 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
       {isEditing && (
         <div className="mb-6">
           <h3 className="text-lg font-medium mb-4">Charges & Status</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <div className="space-y-2">
-              <Label htmlFor="basicFreight">Basic Freight (₹)</Label>
-              <Input
-                id="basicFreight"
-                name="basicFreight"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-                value={charges.basicFreight || ''}
-                onChange={handleChargeChange}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="cod">COD (₹)</Label>
-              <Input
-                id="cod"
-                name="cod"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-                value={charges.cod || ''}
-                onChange={handleChargeChange}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="freightHandling">Freight Handling (₹)</Label>
-              <Input
-                id="freightHandling"
-                name="freightHandling"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-                value={charges.freightHandling || ''}
-                onChange={handleChargeChange}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="pickupDelivery">Pickup & Delivery (₹)</Label>
-              <Input
-                id="pickupDelivery"
-                name="pickupDelivery"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-                value={charges.pickupDelivery || ''}
-                onChange={handleChargeChange}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="packaging">Packaging (₹)</Label>
-              <Input
-                id="packaging"
-                name="packaging"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-                value={charges.packaging || ''}
-                onChange={handleChargeChange}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="cwbCharge">CWB Charge (₹)</Label>
-              <Input
-                id="cwbCharge"
-                name="cwbCharge"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-                value={charges.cwbCharge || ''}
-                onChange={handleChargeChange}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="otherCharges">Other Charges (₹)</Label>
-              <Input
-                id="otherCharges"
-                name="otherCharges"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-                value={charges.otherCharges || ''}
-                onChange={handleChargeChange}
-              />
-            </div>
-
-            <div className="md:col-span-3 border-t pt-4 mt-2">
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-muted-foreground">Subtotal:</span>
-                <span>₹{calculateSubtotal().toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between items-center font-bold">
-                <span>Total:</span>
-                <span>₹{calculateTotal().toFixed(2)}</span>
-              </div>
-            </div>
-            
+          
+          <div className="mb-6">
+            <PricingDetails 
+              charges={charges} 
+              editable={true} 
+              onChargeChange={handleChargeChange} 
+            />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
               <Select value={invoiceData.status} onValueChange={handleStatusChange}>

@@ -34,6 +34,7 @@ export const useInvoiceForm = (invoiceId?: string) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  
   const [charges, setCharges] = useState({
     basicFreight: 0,
     cod: 0,
@@ -67,9 +68,27 @@ export const useInvoiceForm = (invoiceId?: string) => {
           if (invoice.item_description && invoice.item_description.includes('charges:')) {
             try {
               const chargesStr = invoice.item_description.split('charges:')[1].trim();
-              setCharges(JSON.parse(chargesStr));
+              const parsedCharges = JSON.parse(chargesStr);
+              setCharges({
+                basicFreight: parsedCharges.basicFreight || 0,
+                cod: parsedCharges.cod || 0,
+                freightHandling: parsedCharges.freightHandling || 0,
+                pickupDelivery: parsedCharges.pickupDelivery || 0,
+                packaging: parsedCharges.packaging || 0,
+                cwbCharge: parsedCharges.cwbCharge || 0,
+                otherCharges: parsedCharges.otherCharges || 0
+              });
             } catch (e) {
               console.log('Error parsing charges from item_description:', e);
+            }
+          }
+          
+          // Extract the pure item description without charges
+          let pureItemDescription = invoice.item_description || '';
+          if (pureItemDescription.includes('charges:')) {
+            pureItemDescription = pureItemDescription.split('charges:')[0].trim();
+            if (pureItemDescription.startsWith('Items: ')) {
+              pureItemDescription = pureItemDescription.substring(7);
             }
           }
           
@@ -92,7 +111,7 @@ export const useInvoiceForm = (invoiceId?: string) => {
             receiverInfo: invoice.receiver_info || '',
             itemCount: invoice.item_count?.toString() || '1',
             itemPhoto: invoice.item_photo || '',
-            itemDescription: invoice.item_description?.split('charges:')[0].replace('Items: ', '') || '',
+            itemDescription: pureItemDescription,
             mode: invoice.mode || 'road',
           });
         }

@@ -15,10 +15,15 @@ const AdminEditInvoice = () => {
   const { isAdmin, isLoading: isAdminLoading } = useAdminAuth();
   const { 
     invoiceData, 
+    charges,
     isLoading: isInvoiceLoading, 
     isSubmitting,
     handleChange,
+    handleChargeChange,
     handleStatusChange,
+    handleModeChange,
+    calculateSubtotal,
+    calculateTotal,
     handleSubmit
   } = useInvoiceForm(id);
 
@@ -47,8 +52,13 @@ const AdminEditInvoice = () => {
             
             <InvoiceForm
               invoiceData={invoiceData}
+              charges={charges}
               handleChange={handleChange}
+              handleChargeChange={handleChargeChange}
               handleStatusChange={handleStatusChange}
+              handleModeChange={handleModeChange}
+              calculateSubtotal={calculateSubtotal}
+              calculateTotal={calculateTotal}
               handleSubmit={handleSubmit}
               isSubmitting={isSubmitting}
               isEditing={!!id}
