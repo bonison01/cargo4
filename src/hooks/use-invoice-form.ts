@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -25,7 +24,7 @@ const defaultInvoiceData: InvoiceFormData = {
   itemCount: '1',
   itemPhoto: '',
   itemDescription: '',
-  mode: 'road', // Default to road transport
+  mode: 'air', // Changed default from 'road' to 'air'
 };
 
 export const useInvoiceForm = (invoiceId?: string) => {
@@ -45,7 +44,6 @@ export const useInvoiceForm = (invoiceId?: string) => {
     otherCharges: 0
   });
 
-  // Fetch invoice data if editing
   useEffect(() => {
     const fetchInvoiceData = async () => {
       if (!invoiceId) return;
@@ -64,7 +62,6 @@ export const useInvoiceForm = (invoiceId?: string) => {
         if (data) {
           const invoice = data as Invoice;
           
-          // Try to parse charges from item_description if available
           if (invoice.item_description && invoice.item_description.includes('charges:')) {
             try {
               const chargesStr = invoice.item_description.split('charges:')[1].trim();
@@ -83,7 +80,6 @@ export const useInvoiceForm = (invoiceId?: string) => {
             }
           }
           
-          // Extract the pure item description without charges
           let pureItemDescription = invoice.item_description || '';
           if (pureItemDescription.includes('charges:')) {
             pureItemDescription = pureItemDescription.split('charges:')[0].trim();
@@ -100,7 +96,7 @@ export const useInvoiceForm = (invoiceId?: string) => {
             items: invoice.items || '',
             weight: invoice.weight?.toString() || '',
             status: invoice.status || 'pending',
-            handlingFee: '200', // Default values as they're not in the database yet
+            handlingFee: '200',
             pickupFee: '100',
             deliveryFee: '150',
             dimensions: '',
@@ -112,7 +108,7 @@ export const useInvoiceForm = (invoiceId?: string) => {
             itemCount: invoice.item_count?.toString() || '1',
             itemPhoto: invoice.item_photo || '',
             itemDescription: pureItemDescription,
-            mode: invoice.mode || 'road',
+            mode: invoice.mode || 'air',
           });
         }
       } catch (error: any) {
@@ -161,7 +157,6 @@ export const useInvoiceForm = (invoiceId?: string) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validation
     if (!invoiceData.from || !invoiceData.to || !invoiceData.originCity || !invoiceData.destinationCity) {
       toast({
         title: "Missing information",
@@ -174,7 +169,6 @@ export const useInvoiceForm = (invoiceId?: string) => {
     try {
       setIsSubmitting(true);
       
-      // Get current user session
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
@@ -189,7 +183,6 @@ export const useInvoiceForm = (invoiceId?: string) => {
       
       const userId = session.user.id;
       
-      // Generate a unique consignment number if not provided
       let consignmentNo = invoiceData.consignmentNo;
       if (!consignmentNo) {
         const date = new Date();
@@ -197,16 +190,12 @@ export const useInvoiceForm = (invoiceId?: string) => {
         consignmentNo = `MT-${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${randomNum}`;
       }
       
-      // Calculate total from charges
       const totalAmount = calculateTotal();
       
-      // Store charges data in item_description
       const itemDescription = `Items: ${invoiceData.itemDescription}; charges: ${JSON.stringify(charges)}`;
       
-      // Update or create invoice
       let result;
       if (invoiceId) {
-        // Update existing invoice
         result = await supabase
           .from('invoices')
           .update({
@@ -225,13 +214,11 @@ export const useInvoiceForm = (invoiceId?: string) => {
             item_count: parseInt(invoiceData.itemCount) || 1,
             item_photo: invoiceData.itemPhoto,
             item_description: itemDescription,
-            mode: invoiceData.mode || 'road',
-            // Don't update user_id when editing
+            mode: invoiceData.mode || 'air',
           })
           .eq('id', invoiceId)
           .select();
       } else {
-        // Create new invoice
         result = await supabase
           .from('invoices')
           .insert({
@@ -241,7 +228,7 @@ export const useInvoiceForm = (invoiceId?: string) => {
             amount: totalAmount,
             items: invoiceData.items,
             weight: parseFloat(invoiceData.weight) || null,
-            status: 'pending', // Always set to pending for new invoices
+            status: 'pending',
             user_id: userId,
             pickup_date: invoiceData.pickupDate,
             origin_city: invoiceData.originCity,
@@ -251,7 +238,7 @@ export const useInvoiceForm = (invoiceId?: string) => {
             item_count: parseInt(invoiceData.itemCount) || 1,
             item_photo: invoiceData.itemPhoto,
             item_description: itemDescription,
-            mode: invoiceData.mode || 'road',
+            mode: invoiceData.mode || 'air',
           })
           .select();
       }

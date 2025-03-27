@@ -154,7 +154,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
         
         <div className="space-y-2">
           <Label htmlFor="mode">Shipping Mode</Label>
-          <Select value={invoiceData.mode || 'road'} onValueChange={handleModeChange}>
+          <Select value={invoiceData.mode || 'air'} onValueChange={handleModeChange}>
             <SelectTrigger>
               <SelectValue placeholder="Select mode" />
             </SelectTrigger>
