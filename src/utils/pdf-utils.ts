@@ -79,7 +79,7 @@ export const generateInvoicePDF = (invoice: Invoice) => {
     ['Items', invoice.items || 'N/A'],
     ['Product Value', `₹${invoice.amount}`],
     ['Status', invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)],
-    ['Mode', invoice.mode || 'Road']
+    // ['Mode', invoice.mode || 'Road']
   ];
   
   let yPosition = 135;
