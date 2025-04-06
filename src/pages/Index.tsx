@@ -47,10 +47,10 @@ const features = [
 const Index = () => {
   return (
     <PageTransition>
-      <Helmet>
+      {/* <Helmet>
         <title>Mateng - Professional Shipping & Invoice Management</title>
         <meta name="description" content="Streamline your shipping process between Imphal and Delhi with professional invoice management and real-time tracking." />
-      </Helmet>
+      </Helmet> */}
 
       <Navbar />
       
