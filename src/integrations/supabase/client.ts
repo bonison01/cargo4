@@ -3,9 +3,11 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = "https://ycnofrccazqcnotxwrsz.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inljbm9mcmNjYXpxY25vdHh3cnN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ1Mzc2MzcsImV4cCI6MjA1MDExMzYzN30.5wY76SPqDZ1qwNYhDNl6uchOhbdkQtv3g_-McHNhL7Y";
+const SUPABASE_URL = "https://cgqxlbqppoyvbmplybnc.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNncXhsYnFwcG95dmJtcGx5Ym5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEwMDg3ODksImV4cCI6MjA1NjU4NDc4OX0.aY__Fal-o6oDCnqw77G5j6pNHSmWMmctGyb8-Gy4luo"
 
+// supabase: makhalmathel04(Cargo):Phone@2143
+// admin@justmateng.com; Mateng@01
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
