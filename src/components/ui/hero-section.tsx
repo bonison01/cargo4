@@ -31,9 +31,9 @@ const HeroSection: React.FC = () => {
               transition={{ duration: 0.5, delay: 0.1 }}
               className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight"
             >
-              Ship with confidence between{' '}
+              Imphal to Delhi{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-mateng-700 to-mateng-500">
-                Imphal and Delhi
+                in One Day
               </span>
             </motion.h1>
 
@@ -43,8 +43,7 @@ const HeroSection: React.FC = () => {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="text-lg text-muted-foreground max-w-xl"
             >
-              Streamline your shipping process with our professional invoice management and real-time tracking system. We take care of everything so you can focus on what matters.
-            </motion.p>
+              Simplify your parcel deliveries with Mateng Logistics.            </motion.p>
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -77,13 +76,13 @@ const HeroSection: React.FC = () => {
                   <div className="bg-mateng-50 p-3 rounded-lg">
                     <FileText className="h-6 w-6 text-mateng-600" />
                   </div>
-                  <div>
+                  {/* <div>
                     <h3 className="text-lg font-semibold">Professional Invoice</h3>
                     <p className="text-sm text-muted-foreground">MT-2024050001</p>
-                  </div>
+                  </div> */}
                   <div className="ml-auto">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-status-transit/10 text-status-transit">
-                      In Transit
+                      One Day Delivery
                     </span>
                   </div>
                 </div>
@@ -105,7 +104,7 @@ const HeroSection: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  {/* <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-muted-foreground">Shipped Date</p>
                       <p className="font-medium">May 15, 2024</p>
@@ -114,7 +113,7 @@ const HeroSection: React.FC = () => {
                       <p className="text-sm text-muted-foreground">Estimated Delivery</p>
                       <p className="font-medium">May 18, 2024</p>
                     </div>
-                  </div>
+                  </div> */}
 
                   <div className="mt-6">
                     <div className="flex justify-between items-center">
